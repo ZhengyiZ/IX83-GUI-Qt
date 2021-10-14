@@ -40,12 +40,13 @@ public:
 
 private:
     void ctlSettings(bool);
+    bool sendCmd(QString cmd, int caseIn, int subIn);
     void processCallback(QString);
-    void focusMove();
+    bool focusMove(double);
 
 signals:
     void sendRegister();
-    void sendCmd(QString cmd);
+    void sendCmdSignal(QString cmd);
 
 private slots:
     void receivePointer(void*);
@@ -67,8 +68,6 @@ private slots:
     void on_zSlider_sliderReleased();
 
     void on_zValue_valueChanged(double value);
-
-    void on_pushButton_clicked();
 
 private:
     Ui::MainWindow *ui;

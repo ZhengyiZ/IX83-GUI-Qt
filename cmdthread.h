@@ -24,6 +24,7 @@ public:
     int caseIndex = 0;
     int subIndex = 0;
 
+    bool busy = false;
     QString rsp;
 
     friend int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam, PVOID pv, PVOID pContext, PVOID pCaller);

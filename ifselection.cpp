@@ -20,7 +20,7 @@ IFSelection::IFSelection(QWidget *parent, void* pIF,
 
     // enumerate interfaces
     int static count = this->ptr_enumIf();
-    count = 3;    // cheat code in case you don't have an interface
+//    count = 3;    // cheat code in case you don't have an interface
     while (!count)
     {
         QMessageBox::StandardButton result =
@@ -65,7 +65,7 @@ void IFSelection::on_buttonBox_accepted()
     while(!result)
     {
         result = this->ptr_openIf(pInterface);
-        result = true;   // cheat code
+//        result = true;   // cheat code
         if (!result)
         {
             QMessageBox::StandardButton button =

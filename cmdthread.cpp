@@ -1,4 +1,5 @@
 #include "cmdthread.h"
+#include <QDebug>
 
 CMDThread::CMDThread(QObject *parent,
                      ptr_SendCommand ptr_sendCmd,
@@ -23,9 +24,10 @@ int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     CMDThread *thread = (CMDThread *)pContext;
 
     // extract string from struct
-    QString rsp = QString(QLatin1String((char *)dlg->m_Cmd.m_Rsp));
+    QString rsp = QString(QLatin1String((char *)thread->m_Cmd.m_Rsp));
     rsp.remove("\r\n", Qt::CaseInsensitive);
     emit thread->sendRsp(rsp);
+    thread->busy = false;
 
     return 0;
 }
@@ -126,8 +128,12 @@ CMDThread::~CMDThread()
 
 void CMDThread::receiveCmd(QString cmd)
 {
-    qDebug() << " < " << cmd << Qt::endl;
-    sendStrCmd(cmd);
+    if (!busy)
+    {
+//        qDebug() << " < " << cmd << Qt::endl;
+        sendStrCmd(cmd);
+        busy = true;
+    }
 }
 
 void CMDThread::receiveRegister()

@@ -1,13 +1,14 @@
 #include <QApplication>
 #include <QLibrary>
 #include <QMessageBox>
+#include <QStyleFactory>
 #include "mainwindow.h"
 #include "ifselection.h"
 #include "DLL.h"
 
 int main(int argc, char *argv[])
 {
-
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
     QApplication a(argc, argv);
 
     //// load DLL library ////
