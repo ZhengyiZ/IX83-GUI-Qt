@@ -215,7 +215,7 @@ void MainWindow::processCallback(QString str)
     if (str.contains("GOB", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to get objective lens information.");
+            ui->statusbar->showMessage("Failed to get objective lens information.", 3000);
         else
         {
             QString indexStr = str.section(",",0,0).right(1);
@@ -256,9 +256,9 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("OB", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to switch objective lens.");
+            ui->statusbar->showMessage("Failed to switch objective lens.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Switching objective lens complete.");
+            ui->statusbar->showMessage("Switching objective lens complete.", 3000);
         else if (str.contains(" ", Qt::CaseSensitive))
         {
             currObj = str.right(1).toInt()-1;
@@ -275,7 +275,7 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("ESC2 ", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to get escape distance.");
+            ui->statusbar->showMessage("Failed to get escape distance.", 3000);
         else
             escapeDist = str.right(1).toInt()*1000;
     }
@@ -284,7 +284,7 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("OPE", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to change idle/setting mode.");
+            ui->statusbar->showMessage("Failed to change idle/setting mode.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
         {
             this->logStatus = true;
@@ -296,7 +296,7 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("FP ", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to get current focus position.");
+            ui->statusbar->showMessage("Failed to get current focus position.", 3000);
         else
         {
             currZ = str.replace("FP ", "").toDouble()/100;
@@ -310,9 +310,9 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("NL", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to get focus near limit.");
+            ui->statusbar->showMessage("Failed to get focus near limit.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Setting focus near limit complete.");
+            ui->statusbar->showMessage("Setting focus near limit complete.", 3000);
         else
         {
             str.replace("NL ", "");
@@ -330,11 +330,17 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("ESH2", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to switch imaging mode.");
+            ui->statusbar->showMessage("Failed to switch imaging mode.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
         {
-            ui->statusbar->showMessage("Switching imaging mode complete.");
-            ctlSettings(true);
+            if (firstImageMode)
+            {
+                ui->statusbar->showMessage("Initialization complete, ready to work.", 3000);
+                ctlSettings(true);
+                firstImageMode = false;
+            }
+            else
+                ui->statusbar->showMessage("Switching imaging mode complete.", 3000);
         }
     }
 
@@ -342,18 +348,18 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("FG", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to move focus.");
+            ui->statusbar->showMessage("Failed to move focus.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Moving focus complete.");
+            ui->statusbar->showMessage("Moving focus complete.", 3000);
     }
 
     // focusing unit speed
     else if (str.contains("FSPD", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to set focusing unit speed.");
+            ui->statusbar->showMessage("Failed to set focusing unit speed.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Setting focusing unit speed complete.");
+            ui->statusbar->showMessage("Setting focusing unit speed complete.", 3000);
     }
 
 }

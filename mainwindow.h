@@ -34,6 +34,7 @@ public:
     int focusNearLimit[6] = {1050000, 1050000, 1050000, 1050000, 1050000}; // unit: 0.01um
     double beforeEscape; // unit: 1um
     double currZ; // unit: 1um
+    bool firstImageMode = true;
 
     void *pInterface;
     ptr_CloseInterface ptr_closeIf;
