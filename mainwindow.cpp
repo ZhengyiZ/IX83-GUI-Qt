@@ -50,7 +50,7 @@ bool MainWindow::sendCmd(QString cmd, int caseIn, int subIn)
     }
     else
     {
-        QMessageBox::critical(NULL, "Microscope", "Microscope is busy, please try again later.");
+        ui->statusbar->showMessage("Microscope is busy, please try again later.", 3000);
         return false;
     }
 }
@@ -370,6 +370,7 @@ bool MainWindow::focusMove(double target)
     cmd.append(QString::number(target*100, 10, 0));
     if(sendCmd(cmd, 0, 0))
     {
+        ui->statusbar->showMessage("Moving Focus...", 3000);
         currZ = target;
         return true;
     }
@@ -382,19 +383,23 @@ void MainWindow::on_switchObjBtn_clicked()
     QString switchObjCmd = "OB ";
     QString indexStr = ui->objSelection->currentText().left(1);
     switchObjCmd.append(indexStr);
-    sendCmd(switchObjCmd, 3, 0);
+    if (sendCmd(switchObjCmd, 3, 0))
+        if (sendCmd("MU2 6", 8, 0))
+            ui->statusbar->showMessage("Switching objective lens...", 3000);
     return;
 }
 
 void MainWindow::on_wfBtn_clicked()
 {
-    sendCmd("MU2 6", 8, 0);
+    if (sendCmd("MU2 6", 8, 0))
+        ui->statusbar->showMessage("Setting imaging mode to wide field...", 3000);
     return;
 }
 
 void MainWindow::on_conBtn_clicked()
 {
-    sendCmd("MU2 7", 8, 1);
+    if (sendCmd("MU2 6", 8, 1))
+        ui->statusbar->showMessage("Setting imaging mode to confocal...", 3000);
     return;
 }
 
@@ -481,7 +486,8 @@ void MainWindow::on_sliderSetBtn_clicked()
             if (i != 5)
                 cmd.append(",");
         }
-        sendCmd(cmd, 0, 0);
+        if (sendCmd(cmd, 0, 0))
+            ui->statusbar->showMessage("Setting focus near limit...", 3000);
 
         ui->zSlider->setMaximum(max);
         ui->zValue->setMaximum((double)max);
@@ -523,7 +529,8 @@ void MainWindow::on_speedSetBtn_clicked()
         cmd.append(QString::number(constant*100));
         cmd.append(",");
         cmd.append(QString::number(final));
-        sendCmd(cmd, 0, 0);
+        if (sendCmd(cmd, 0, 0))
+            ui->statusbar->showMessage("Setting focus unit speeds...", 3000);
     }
 
     return;
