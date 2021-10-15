@@ -19,9 +19,9 @@ IFSelection::IFSelection(QWidget *parent, void* pIF,
     this->ptr_closeIf = ptr_closeIf;
 
     // enumerate interfaces
-    int static count = this->ptr_enumIf();
-//    count = 3;    // cheat code in case you don't have an interface
-    while (!count)
+    portCount = this->ptr_enumIf();
+//    portCount = 3;    // cheat code in case you don't have an interface
+    while (!portCount)
     {
         QMessageBox::StandardButton result =
                 QMessageBox::critical(NULL,"Failed to enumerate interface",
@@ -40,10 +40,10 @@ IFSelection::IFSelection(QWidget *parent, void* pIF,
 
     // set widgets
     QString labelStr = ui->label->text();
-    labelStr.append( QString::number(count) );
+    labelStr.append( QString::number(portCount) );
     ui->label->setText( labelStr );
     ui->comboBox->clear();
-    for (int i=0; i<count; i++)
+    for (int i=0; i<portCount; i++)
         ui->comboBox->addItem( QString::asprintf("Interface %d",i+1) );
 }
 
@@ -68,18 +68,13 @@ void IFSelection::on_buttonBox_accepted()
 //        result = true;   // cheat code
         if (!result)
         {
-            QMessageBox::StandardButton button =
-                    QMessageBox::critical(NULL,"Failed to open interface",
-                                               "Cloud not open port!",
-                                               QMessageBox::Retry|QMessageBox::Cancel);
-            switch (button)
-            {
-            case QMessageBox::Cancel:
-                emit sendQuitFromDialog(true);
-                return;
-            default:
-                break;
-            }
+            QMessageBox::warning(NULL,"Failed to open interface",
+                                  "Cloud not open port "
+                                  + QString::number(ui->comboBox->currentIndex())
+                                  + "! Reopening the program may solve this problem.",
+                                  QMessageBox::Ok);
+            emit sendQuitFromDialog(true);
+            return;
         }
         else
         {

@@ -23,6 +23,7 @@ public:
                          ptr_CloseInterface ptr_closeIf = nullptr);
     ~IFSelection();
 
+    int portCount;
     void* pIF;
     ptr_EnumInterface ptr_enumIf;
     ptr_GetInterfaceInfo ptr_getInfo;
@@ -33,7 +34,7 @@ signals:
     void sendPointer(void *);
     void sendQuitFromDialog(bool);
 
-private slots:
+public slots:
     void on_buttonBox_accepted();
     void on_buttonBox_rejected();
 

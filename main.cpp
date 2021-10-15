@@ -72,10 +72,16 @@ int main(int argc, char *argv[])
     QObject::connect(IFdialog, SIGNAL(sendQuitFromDialog(bool)),
                      w, SLOT(receiveQuit(bool)));
 
-    if( IFdialog->exec() == QDialog::Rejected )
+    // auto connect when there is only one port exists
+    if (IFdialog->portCount == 1)
+        IFdialog->on_buttonBox_accepted();
+    else
     {
-        a.exit();
-        return 0;
+        if( IFdialog->exec() == QDialog::Rejected )
+        {
+            a.exit();
+            return 0;
+        }
     }
 
     if (w->quitSymbol)
