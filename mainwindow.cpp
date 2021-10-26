@@ -384,8 +384,7 @@ void MainWindow::on_switchObjBtn_clicked()
     QString indexStr = ui->objSelection->currentText().left(1);
     switchObjCmd.append(indexStr);
     if (sendCmd(switchObjCmd, 3, 0))
-        if (sendCmd("MU2 6", 8, 0))
-            ui->statusbar->showMessage("Switching objective lens...", 3000);
+        ui->statusbar->showMessage("Switching objective lens...", 3000);
     return;
 }
 
