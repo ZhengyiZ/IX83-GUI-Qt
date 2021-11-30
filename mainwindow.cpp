@@ -225,7 +225,7 @@ void MainWindow::receiveRsp(QString rsp)
         return;
     case 10: // send button
         ui->lineRsp->setText(rsp);
-        ui->statusbar->showMessage("Success to receive response", 3000);
+        ui->statusbar->showMessage("Success to receive response.", 3000);
         return;
     default:
         return;
@@ -634,10 +634,10 @@ void MainWindow::on_lineCmd_returnPressed()
         {
             firstAdvCmd = false;
             if( sendCmd(ui->lineCmd->text(),10,0) )
-                ui->statusbar->showMessage("Success to send command", 3000);
+                ui->statusbar->showMessage("Success to send command.", 3000);
         }
     }
     else
         if( sendCmd(ui->lineCmd->text(),10,0) )
-            ui->statusbar->showMessage("Success to send command", 3000);
+            ui->statusbar->showMessage("Success to send command.", 3000);
 }
