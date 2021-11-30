@@ -35,6 +35,7 @@ public:
     double beforeEscape; // unit: 1um
     double currZ; // unit: 1um
     bool firstImageMode = true;
+    bool firstAdvCmd = true;
 
     void *pInterface;
     ptr_CloseInterface ptr_closeIf;
@@ -69,6 +70,12 @@ private slots:
     void on_zSlider_sliderReleased();
 
     void on_zValue_valueChanged(double value);
+
+    void on_roughBtn_clicked();
+
+    void on_maxLine_returnPressed();
+
+    void on_lineCmd_returnPressed();
 
 private:
     Ui::MainWindow *ui;

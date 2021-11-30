@@ -26,6 +26,7 @@ int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     // extract string from struct
     QString rsp = QString(QLatin1String((char *)thread->m_Cmd.m_Rsp));
     rsp.remove("\r\n", Qt::CaseInsensitive);
+//    qDebug() << " > " << rsp << Qt::endl;
     emit thread->sendRsp(rsp);
     thread->busy = false;
 

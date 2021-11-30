@@ -31,6 +31,14 @@ MainWindow::MainWindow(QWidget *parent,
     connect(thread, SIGNAL(sendRegisterResult(bool)), this, SLOT(receiveRegisterResult(bool)));
 
     // init settings
+    ui->minLine->setValidator(new QIntValidator(0,10500,this));
+    ui->maxLine->setValidator(new QIntValidator(0,10500,this));
+    ui->initLine->setValidator(new QIntValidator(1,700,this));
+    ui->constantLine->setValidator(new QIntValidator(1,3000,this));
+    ui->finalLine->setValidator(new QIntValidator(1,1000,this));
+    ui->toolBox->setCurrentIndex(0);
+
+    // disable all the components
     ctlSettings(false);
 }
 
@@ -50,8 +58,18 @@ bool MainWindow::sendCmd(QString cmd, int caseIn, int subIn)
     }
     else
     {
-        ui->statusbar->showMessage("Microscope is busy, please try again later.", 3000);
-        return false;
+        QMessageBox::StandardButton result =
+                QMessageBox::warning(NULL,"Fail to send command",
+                                           "Microscope is busy, please try again later.",
+                                           QMessageBox::Retry|QMessageBox::Ok, QMessageBox::Ok);
+        switch (result)
+        {
+        case QMessageBox::Retry:
+            this->sendCmd(cmd, caseIn, subIn); // recursion
+            return false;
+        default:
+            return false;
+        }
     }
 }
 
@@ -59,8 +77,11 @@ void MainWindow::ctlSettings(bool a)
 {
     ui->switchObjBtn->setEnabled(a);
     ui->groupBox->setEnabled(a);
+    ui->lineCmd->setEnabled(a);
+    ui->lineRsp->setEnabled(a);
     ui->zValue->setEnabled(a);
     ui->zSlider->setEnabled(a);
+    ui->roughBtn->setEnabled(a);
     ui->fineBtn->setEnabled(a);
     ui->escapeBtn->setEnabled(a);
     ui->sliderSetBtn->setEnabled(a);
@@ -86,7 +107,7 @@ void MainWindow::closeEvent (QCloseEvent *e)
         if( QMessageBox::question(this,
                                   "Quit",
                                   "Are you sure to quit this application?",
-                                  QMessageBox::Yes, QMessageBox::No )
+                                  QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes )
                 == QMessageBox::Yes)
         {
             sendCmd("L 0,0", 9, 0);
@@ -110,7 +131,7 @@ void MainWindow::receiveRegisterResult(bool result)
                     QMessageBox::critical(NULL, "Failed to Register Callback",
                                           "Unkown reason!\n"
                                           "Maybe there is no Interface connected.",
-                                          QMessageBox::Retry|QMessageBox::Cancel);
+                                          QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Retry);
             switch (result)
             {
             case QMessageBox::Cancel:
@@ -138,7 +159,6 @@ void MainWindow::receivePointer(void *pInterface_new)
 
 void MainWindow::receiveRsp(QString rsp)
 {
-//    qDebug() << " > " << rsp << Qt::endl;
 
     processCallback(rsp);
 
@@ -202,6 +222,10 @@ void MainWindow::receiveRsp(QString rsp)
         this->ptr_closeIf(pInterface);
         quitSymbol = true;
         qApp->quit();
+        return;
+    case 10: // send button
+        ui->lineRsp->setText(rsp);
+        ui->statusbar->showMessage("Success to receive response", 3000);
         return;
     default:
         return;
@@ -397,7 +421,7 @@ void MainWindow::on_wfBtn_clicked()
 
 void MainWindow::on_conBtn_clicked()
 {
-    if (sendCmd("MU2 6", 8, 1))
+    if (sendCmd("MU2 7", 8, 1))
         ui->statusbar->showMessage("Setting imaging mode to confocal...", 3000);
     return;
 }
@@ -409,12 +433,35 @@ void MainWindow::on_fineBtn_clicked()
         // form Unchecked to Checked
         ui->zValue->setSingleStep(0.01);
         ui->fineBtn->setChecked(true);
+        ui->roughBtn->setChecked(false);
     }
     else
     {
         // form Checked to Unchecked
         ui->zValue->setSingleStep(0.1);
         ui->fineBtn->setChecked(false);
+    }
+
+    if (ui->zValue->value() != currZ)
+        focusMove(ui->zValue->value());
+
+    return;
+}
+
+void MainWindow::on_roughBtn_clicked()
+{
+    if (ui->roughBtn->isChecked())
+    {
+        // form Unchecked to Checked
+        ui->zValue->setSingleStep(1);
+        ui->roughBtn->setChecked(true);
+        ui->fineBtn->setChecked(false);
+    }
+    else
+    {
+        // form Checked to Unchecked
+        ui->zValue->setSingleStep(0.1);
+        ui->roughBtn->setChecked(false);
     }
 
     if (ui->zValue->value() != currZ)
@@ -466,13 +513,13 @@ void MainWindow::on_sliderSetBtn_clicked()
     if (max>10500)
     {
         QMessageBox::warning(this,"Error",
-                                  "The maximum value should not exceed 10500μm.");
+                             "The maximum value should not exceed 10500μm.");
         ui->maxLine->setText("10500");
     }
     else if (min<0)
     {
         QMessageBox::warning(this,"Error",
-                                  "The minimum value should not be negative.");
+                             "The minimum value should not be negative.");
         ui->minLine->setText("0");
     }
     else
@@ -491,8 +538,15 @@ void MainWindow::on_sliderSetBtn_clicked()
         ui->zSlider->setMaximum(max);
         ui->zValue->setMaximum((double)max);
         ui->zSlider->setMinimum(min);
+        ui->zValue->setMinimum((double)min);
+        if (currZ != ui->zValue->value())
+        {
+            focusMove(ui->zValue->value());
+            ui->zSlider->setValue((int)currZ);
+            ui->zValue->setValue(currZ);
+        }
+        ui->toolBox->setCurrentIndex(0);
     }
-
     return;
 }
 
@@ -505,19 +559,19 @@ void MainWindow::on_speedSetBtn_clicked()
     if (init>700 || init<1)
     {
         QMessageBox::warning(this,"Error",
-                                  "The init speed is not in range (1-700).");
+                             "The init speed is not in range (1-700).");
         ui->initLine->setText("700");
     }
     else if (constant>3000 || constant<1)
     {
         QMessageBox::warning(this,"Error",
-                                  "The constant speed is not in range (1-3000).");
+                             "The constant speed is not in range (1-3000).");
         ui->constantLine->setText("700");
     }
     else if (final>1000 || final<1)
     {
         QMessageBox::warning(this,"Error",
-                                  "The deceleration time is not in range (1-1000).");
+                             "The deceleration time is not in range (1-1000).");
         ui->finalLine->setText("60");
     }
     else
@@ -531,7 +585,6 @@ void MainWindow::on_speedSetBtn_clicked()
         if (sendCmd(cmd, 0, 0))
             ui->statusbar->showMessage("Setting focus unit speeds...", 3000);
     }
-
     return;
 }
 
@@ -545,7 +598,6 @@ void MainWindow::on_zSlider_sliderReleased()
     focusMove(target);
     ui->zValue->setValue(currZ);
     ui->zSlider->setValue((int)currZ);
-
 
     return;
 }
@@ -563,4 +615,29 @@ void MainWindow::on_zValue_valueChanged(double value)
     }
 
     return;
+}
+
+void MainWindow::on_maxLine_returnPressed()
+{
+    on_sliderSetBtn_clicked();
+}
+
+void MainWindow::on_lineCmd_returnPressed()
+{
+    if(firstAdvCmd)
+    {
+        if( QMessageBox::warning(this,"Enable advanced command mode?",
+                                      "Advanced command mode may damage the frame and cause software errors,"
+                                      " please make sure the command is entered correctly according to the manual.",
+                                      QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes)
+                == QMessageBox::Yes)
+        {
+            firstAdvCmd = false;
+            if( sendCmd(ui->lineCmd->text(),10,0) )
+                ui->statusbar->showMessage("Success to send command", 3000);
+        }
+    }
+    else
+        if( sendCmd(ui->lineCmd->text(),10,0) )
+            ui->statusbar->showMessage("Success to send command", 3000);
 }
