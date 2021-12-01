@@ -35,7 +35,7 @@ public:
     double beforeEscape; // unit: 1um
     double currZ; // unit: 1um
     bool firstImageMode = true;
-    bool firstAdvCmd = true;
+    bool advCmd = false;
 
     void *pInterface;
     ptr_CloseInterface ptr_closeIf;
@@ -76,6 +76,8 @@ private slots:
     void on_maxLine_returnPressed();
 
     void on_lineCmd_returnPressed();
+
+    void on_cmdBtn_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -44,14 +44,14 @@
     </property>
     <property name="font">
      <font>
-      <family>微软雅黑</family>
+      <family>Consolas</family>
       <pointsize>11</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="page">
      <property name="geometry">
@@ -59,7 +59,7 @@
        <x>0</x>
        <y>0</y>
        <width>160</width>
-       <height>332</height>
+       <height>336</height>
       </rect>
      </property>
      <attribute name="label">
@@ -306,7 +306,7 @@
        <x>0</x>
        <y>0</y>
        <width>160</width>
-       <height>332</height>
+       <height>336</height>
       </rect>
      </property>
      <attribute name="label">
@@ -860,7 +860,7 @@
      </widget>
     </widget>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>11</x>
@@ -870,6 +870,24 @@
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_4">
+     <item>
+      <widget class="QLabel" name="KLAB">
+       <property name="font">
+        <font>
+         <family>Fredericka the Great</family>
+         <pointsize>16</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>K-LAB</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
      <item>
       <spacer name="verticalSpacer">
        <property name="orientation">
@@ -889,7 +907,7 @@
         <widget class="QLabel" name="fixedLabel1">
          <property name="font">
           <font>
-           <family>微软雅黑</family>
+           <family>Consolas</family>
            <pointsize>11</pointsize>
            <weight>75</weight>
            <bold>true</bold>
@@ -1029,7 +1047,7 @@
        </property>
        <property name="font">
         <font>
-         <family>微软雅黑</family>
+         <family>Consolas</family>
          <pointsize>11</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -1045,7 +1063,7 @@
         <property name="geometry">
          <rect>
           <x>50</x>
-          <y>30</y>
+          <y>28</y>
           <width>111</width>
           <height>18</height>
          </rect>
@@ -1075,7 +1093,7 @@
         <property name="geometry">
          <rect>
           <x>50</x>
-          <y>50</y>
+          <y>49</y>
           <width>101</width>
           <height>18</height>
          </rect>
@@ -1110,10 +1128,10 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QLabel" name="cmdLabel">
+        <widget class="QPushButton" name="cmdBtn">
          <property name="font">
           <font>
-           <family>微软雅黑</family>
+           <family>Consolas</family>
            <pointsize>11</pointsize>
            <weight>75</weight>
            <bold>true</bold>
@@ -1121,9 +1139,6 @@
          </property>
          <property name="text">
           <string>Command</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>

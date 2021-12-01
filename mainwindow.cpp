@@ -38,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent,
     ui->finalLine->setValidator(new QIntValidator(1,1000,this));
     ui->toolBox->setCurrentIndex(0);
 
+    ui->lineCmd->setVisible(0);
+    ui->lineRsp->setVisible(0);
+
     // disable all the components
     ctlSettings(false);
 }
@@ -54,6 +57,7 @@ bool MainWindow::sendCmd(QString cmd, int caseIn, int subIn)
         thread->caseIndex = caseIn;
         thread->subIndex = subIn;
         emit sendCmdSignal(cmd);
+        ui->lineCmd->setText(cmd);
         return true;
     }
     else
@@ -77,6 +81,7 @@ void MainWindow::ctlSettings(bool a)
 {
     ui->switchObjBtn->setEnabled(a);
     ui->groupBox->setEnabled(a);
+    ui->cmdBtn->setEnabled(a);
     ui->lineCmd->setEnabled(a);
     ui->lineRsp->setEnabled(a);
     ui->zValue->setEnabled(a);
@@ -160,6 +165,7 @@ void MainWindow::receivePointer(void *pInterface_new)
 void MainWindow::receiveRsp(QString rsp)
 {
 
+    ui->lineRsp->setText(rsp);
     processCallback(rsp);
 
     switch (thread->caseIndex)
@@ -223,8 +229,7 @@ void MainWindow::receiveRsp(QString rsp)
         quitSymbol = true;
         qApp->quit();
         return;
-    case 10: // send button
-        ui->lineRsp->setText(rsp);
+    case 10: // advanced command
         ui->statusbar->showMessage("Success to receive response.", 3000);
         return;
     default:
@@ -624,20 +629,39 @@ void MainWindow::on_maxLine_returnPressed()
 
 void MainWindow::on_lineCmd_returnPressed()
 {
-    if(firstAdvCmd)
+    if( sendCmd(ui->lineCmd->text(),10,0) )
+        ui->statusbar->showMessage("Success to send command.", 3000);
+}
+
+void MainWindow::on_cmdBtn_clicked()
+{
+    if(advCmd == false)
     {
-        if( QMessageBox::warning(this,"Enable advanced command mode?",
-                                      "Advanced command mode may damage the frame and cause software errors,"
-                                      " please make sure the command is entered correctly according to the manual.",
-                                      QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes)
+        if( QMessageBox::warning(this, "Advanced Command Mode",
+                                 "This mode will allow you to view all commands and replies,"
+                                 " and send custom commands (press the enter key).\n"
+                                 "Custom commands may damage the frame and cause software errors.\n"
+                                 "See manual for details of commands.\n"
+                                 "Continue?", QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes)
                 == QMessageBox::Yes)
         {
-            firstAdvCmd = false;
-            if( sendCmd(ui->lineCmd->text(),10,0) )
-                ui->statusbar->showMessage("Success to send command.", 3000);
+            advCmd = true;
+            ui->lineCmd->setVisible(1);
+            ui->lineRsp->setVisible(1);
         }
     }
     else
-        if( sendCmd(ui->lineCmd->text(),10,0) )
-            ui->statusbar->showMessage("Success to send command.", 3000);
+    {
+        if(ui->lineCmd->isVisible())
+        {
+            ui->lineCmd->setVisible(0);
+            ui->lineRsp->setVisible(0);
+        }
+        else
+        {
+            ui->lineCmd->setVisible(1);
+            ui->lineRsp->setVisible(1);
+        }
+    }
 }
+
