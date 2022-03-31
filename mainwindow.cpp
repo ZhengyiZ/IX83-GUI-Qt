@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent,
 {
     ui->setupUi(this);
     this->setWindowTitle("Olympus IX83 Control");
+    this->setWindowFlags(Qt::WindowStaysOnTopHint);
 
     // pass parameters
     this->pInterface = nullptr;
@@ -19,8 +20,8 @@ MainWindow::MainWindow(QWidget *parent,
     thread = new CMDThread(nullptr, ptr_sendCmd, ptr_reCb);
 
     // emit command to thread
-    connect(this, SIGNAL(sendCmdSignal(QString)),
-            thread, SLOT(receiveCmd(QString)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sendCmdSignal()),
+            thread, SLOT(receiveCmd()), Qt::QueuedConnection);
 
     // receive response from thread
     connect(thread, SIGNAL(sendRsp(QString)),
@@ -50,31 +51,12 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-bool MainWindow::sendCmd(QString cmd, int caseIn, int subIn)
+bool MainWindow::sendCmd(QString cmd)
 {
-    if (!thread->busy)
-    {
-        thread->caseIndex = caseIn;
-        thread->subIndex = subIn;
-        emit sendCmdSignal(cmd);
-        ui->lineCmd->setText(cmd);
-        return true;
-    }
-    else
-    {
-        QMessageBox::StandardButton result =
-                QMessageBox::warning(NULL,"Fail to send command",
-                                           "Microscope is busy, please try again later.",
-                                           QMessageBox::Retry|QMessageBox::Ok, QMessageBox::Ok);
-        switch (result)
-        {
-        case QMessageBox::Retry:
-            this->sendCmd(cmd, caseIn, subIn); // recursion
-            return false;
-        default:
-            return false;
-        }
-    }
+    thread->cmdFIFO.enqueue(cmd);
+    emit sendCmdSignal();
+    ui->lineCmd->setText(cmd);
+    return true;
 }
 
 void MainWindow::ctlSettings(bool a)
@@ -88,6 +70,7 @@ void MainWindow::ctlSettings(bool a)
     ui->zSlider->setEnabled(a);
     ui->roughBtn->setEnabled(a);
     ui->fineBtn->setEnabled(a);
+    ui->syncBtn->setEnabled(a);
     ui->escapeBtn->setEnabled(a);
     ui->sliderSetBtn->setEnabled(a);
     ui->speedSetBtn->setEnabled(a);
@@ -115,7 +98,8 @@ void MainWindow::closeEvent (QCloseEvent *e)
                                   QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes )
                 == QMessageBox::Yes)
         {
-            sendCmd("L 0,0", 9, 0);
+            thread->quitCmd = true;
+            sendCmd("L 0,0");
             ui->statusbar->showMessage("Logging out from microscope, which will be fast.");
         }
         e->ignore();
@@ -157,9 +141,39 @@ void MainWindow::receivePointer(void *pInterface_new)
     this->thread->start();
 
     //// Initialization Pipeline ////
-    // 1.get first objective lens information
-    sendCmd("GOB 1", 1, 1);
+
     ui->statusbar->showMessage("Logging in, please wait a few seconds.");
+
+    // 1.get objective lenses information
+    sendCmd("GOB 1");
+    sendCmd("GOB 2");
+    sendCmd("GOB 3");
+    sendCmd("GOB 4");
+    sendCmd("GOB 5");
+    sendCmd("GOB 6");
+
+    // 2.log into remote mode
+    sendCmd("L 1,0");
+
+    // 3.log into setting mode
+    sendCmd("OPE 0");
+
+    // 4.get current objective lens
+    sendCmd("OB?");
+
+    // 5.get focus escape distance of current objective lens
+    sendCmd("ESC2?");
+
+    // 6.check focus near limit
+    sendCmd("NL?");
+
+    // 7.get current focus position
+    sendCmd("FP?");
+
+    // 8.set imaging mode to wide field at first
+    on_wfBtn_clicked();
+
+    //// Initialization Pipeline Ends ////
 }
 
 void MainWindow::receiveRsp(QString rsp)
@@ -168,73 +182,15 @@ void MainWindow::receiveRsp(QString rsp)
     ui->lineRsp->setText(rsp);
     processCallback(rsp);
 
-    switch (thread->caseIndex)
+    if (thread->quitCmd)
     {
-
-    //// Initialization Pipeline ////
-    // 2.get other objective lenses and log into remote mode
-    case 1:{
-        if (thread->subIndex < 6)
-        {
-            int index = thread->subIndex + 1;
-            QString cmd = "GOB ";
-            cmd.append(QString::number(index));
-            sendCmd(cmd, 1, index);
-        }
-        else
-            sendCmd("L 1,0", 2, 0);
-        return;
-    }
-    // 3.log into setting mode
-    case 2:{
-        sendCmd("OPE 0", 3, 1);
-        return;
-    }
-    // 4.get current objective lens
-    case 3:{
-        sendCmd("OB?", 4, thread->subIndex);
-        return;
-    }
-    // 5.get focus escape distance of current objective lens
-    case 4:{
-        sendCmd("ESC2?", 5, thread->subIndex);
-        return;
-    }
-    // 6.check focus near limit
-    case 5:{
-        if(thread->subIndex == 1)
-            sendCmd("NL?", 6, 0);
-        return;
-    }
-    // 7.get current focus position
-    case 6:{
-        sendCmd("FP?", 7, 0);
-        return;
-    }
-    // 8.set imaging mode to wide field at first
-    case 7:{
-        on_wfBtn_clicked();
-        return;
-    }
-    //// Initialization Pipeline Ends ////
-
-    case 8:{ // set shutter status
-        QString cmd = "ESH2 ";
-        cmd.append(QString::number(thread->subIndex));
-        sendCmd(cmd, 0, 0);
-        return;
-    }
-    case 9: // closeEvent
+        // closeEvent
         this->ptr_closeIf(pInterface);
         quitSymbol = true;
         qApp->quit();
         return;
-    case 10: // advanced command
-        ui->statusbar->showMessage("Success to receive response.", 3000);
-        return;
-    default:
-        return;
     }
+
 }
 
 // processing callback by categories
@@ -294,7 +250,11 @@ void MainWindow::processCallback(QString str)
             ui->objLabel->setText(ui->objSelection->itemText(currObj));
             ui->objSelection->setCurrentIndex(currObj);
             double max = focusNearLimit[currObj]/100;
+
+            ui->zValue->blockSignals(true);
             ui->zValue->setMaximum(max);
+            ui->zValue->blockSignals(false);
+
             ui->zSlider->setMaximum((int)max);
             ui->maxLine->setText(QString::number(max, 10, 0));
         }
@@ -315,9 +275,38 @@ void MainWindow::processCallback(QString str)
         if (str.contains("!", Qt::CaseSensitive))
             ui->statusbar->showMessage("Failed to change idle/setting mode.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
-        {
-            this->logStatus = true;
             ui->statusbar->showMessage("Log in success.");
+    }
+
+    // focus position active notification
+    else if (str.contains("NFP", Qt::CaseSensitive))
+    {
+        if (str.contains("!", Qt::CaseSensitive))
+            if (ui->syncBtn->isChecked())
+            {
+                ui->statusbar->showMessage("Failed to turn on auto sync mode.", 3000);
+                ui->syncBtn->setChecked(false);
+            }
+        else
+            {
+                ui->statusbar->showMessage("Failed to turn off auto sync mode.", 3000);
+                ui->syncBtn->setChecked(true);
+            }
+        else if (str.contains("+", Qt::CaseSensitive))
+            if (ui->syncBtn->isChecked())
+                ui->statusbar->showMessage("Auto sync mode is turned on.", 3000);
+            else
+                ui->statusbar->showMessage("Auto sync mode is turned off.", 3000);
+        else
+        {
+            str.remove("NFP ");
+            currZ = str.toDouble() / 100;
+            ui->zSlider->setValue((int)currZ);
+
+            ui->zValue->blockSignals(true);
+            ui->zValue->setValue(currZ);
+            ui->zValue->blockSignals(false);
+
         }
     }
 
@@ -329,8 +318,11 @@ void MainWindow::processCallback(QString str)
         else
         {
             currZ = str.replace("FP ", "").toDouble()/100;
-            qDebug() << QString::number(currZ) << Qt::endl;
+
+            ui->zValue->blockSignals(true);
             ui->zValue->setValue(currZ);
+            ui->zValue->blockSignals(false);
+
             ui->zSlider->setValue((int)currZ);
         }
     }
@@ -349,7 +341,9 @@ void MainWindow::processCallback(QString str)
                 focusNearLimit[i] = str.section(",",i,i).toInt();
 
             double max = focusNearLimit[currObj]/100;
+
             ui->zValue->setMaximum(max);
+
             ui->zSlider->setMaximum((int)max);
             ui->maxLine->setText(QString::number(max, 10, 0));
         }
@@ -397,14 +391,10 @@ bool MainWindow::focusMove(double target)
 {
     QString cmd = "FG ";
     cmd.append(QString::number(target*100, 10, 0));
-    if(sendCmd(cmd, 0, 0))
-    {
-        ui->statusbar->showMessage("Moving Focus...", 3000);
-        currZ = target;
-        return true;
-    }
-    else
-        return false;
+    sendCmd(cmd);
+    ui->statusbar->showMessage("Moving Focus...", 3000);
+    currZ = target;
+    return true;
 }
 
 void MainWindow::on_switchObjBtn_clicked()
@@ -412,22 +402,27 @@ void MainWindow::on_switchObjBtn_clicked()
     QString switchObjCmd = "OB ";
     QString indexStr = ui->objSelection->currentText().left(1);
     switchObjCmd.append(indexStr);
-    if (sendCmd(switchObjCmd, 3, 0))
-        ui->statusbar->showMessage("Switching objective lens...", 3000);
+    ui->statusbar->showMessage("Switching objective lens...", 3000);
+    sendCmd(switchObjCmd);
+    sendCmd("ESC2?");
     return;
 }
 
 void MainWindow::on_wfBtn_clicked()
 {
-    if (sendCmd("MU2 6", 8, 0))
-        ui->statusbar->showMessage("Setting imaging mode to wide field...", 3000);
+    ui->statusbar->showMessage("Setting imaging mode to wide field...", 3000);
+    sendCmd("MU2 5");
+    // open shutter
+    sendCmd("ESH2 0");
     return;
 }
 
 void MainWindow::on_conBtn_clicked()
 {
-    if (sendCmd("MU2 7", 8, 1))
-        ui->statusbar->showMessage("Setting imaging mode to confocal...", 3000);
+    ui->statusbar->showMessage("Setting imaging mode to confocal...", 3000);
+    sendCmd("MU2 4");
+    // close shutter
+    sendCmd("ESH2 1");
     return;
 }
 
@@ -485,26 +480,20 @@ void MainWindow::on_escapeBtn_clicked()
         if (currZ - escapeDist >= 0)
             target = currZ - escapeDist;
 
-        if (focusMove(target))
-        {
-            ui->zSlider->setValue((int)currZ);
-            ui->zValue->setValue(currZ);
-            ui->escapeBtn->setChecked(true);
-        }
-        else
-            ui->escapeBtn->setChecked(false);
+        focusMove(target);
+        ui->zSlider->setValue((int)currZ);
+        ui->zValue->setValue(currZ);
+        ui->escapeBtn->setChecked(true);
+
     }
     else
     {
         // from Checked to Unchecked
-        if (focusMove(beforeEscape))
-        {
-            ui->zSlider->setValue((int)currZ);
-            ui->zValue->setValue(currZ);
-            ui->escapeBtn->setChecked(false);
-        }
-        else
-            ui->escapeBtn->setChecked(true);
+        focusMove(beforeEscape);
+        ui->zSlider->setValue((int)currZ);
+        ui->zValue->setValue(currZ);
+        ui->escapeBtn->setChecked(false);
+
     }
 
     return;
@@ -518,7 +507,7 @@ void MainWindow::on_sliderSetBtn_clicked()
     if (max>10500)
     {
         QMessageBox::warning(this,"Error",
-                             "The maximum value should not exceed 10500μm.");
+                             "The maximum value should not exceed 10500 μm.");
         ui->maxLine->setText("10500");
     }
     else if (min<0)
@@ -537,19 +526,14 @@ void MainWindow::on_sliderSetBtn_clicked()
             if (i != 5)
                 cmd.append(",");
         }
-        if (sendCmd(cmd, 0, 0))
-            ui->statusbar->showMessage("Setting focus near limit...", 3000);
+
+        ui->statusbar->showMessage("Setting focus near limit...", 3000);
+        sendCmd(cmd);
 
         ui->zSlider->setMaximum(max);
         ui->zValue->setMaximum((double)max);
         ui->zSlider->setMinimum(min);
         ui->zValue->setMinimum((double)min);
-        if (currZ != ui->zValue->value())
-        {
-            focusMove(ui->zValue->value());
-            ui->zSlider->setValue((int)currZ);
-            ui->zValue->setValue(currZ);
-        }
         ui->toolBox->setCurrentIndex(0);
     }
     return;
@@ -587,8 +571,8 @@ void MainWindow::on_speedSetBtn_clicked()
         cmd.append(QString::number(constant*100));
         cmd.append(",");
         cmd.append(QString::number(final));
-        if (sendCmd(cmd, 0, 0))
-            ui->statusbar->showMessage("Setting focus unit speeds...", 3000);
+        ui->statusbar->showMessage("Setting focus unit speeds...", 3000);
+        sendCmd(cmd);
     }
     return;
 }
@@ -609,6 +593,7 @@ void MainWindow::on_zSlider_sliderReleased()
 
 void MainWindow::on_zValue_valueChanged(double value)
 {
+
     if (ui->escapeBtn->isChecked())
         ui->escapeBtn->setChecked(false);
 
@@ -618,7 +603,6 @@ void MainWindow::on_zValue_valueChanged(double value)
         ui->zSlider->setValue((int)currZ);
         ui->zValue->setValue(currZ);
     }
-
     return;
 }
 
@@ -629,8 +613,8 @@ void MainWindow::on_maxLine_returnPressed()
 
 void MainWindow::on_lineCmd_returnPressed()
 {
-    if( sendCmd(ui->lineCmd->text(),10,0) )
-        ui->statusbar->showMessage("Success to send command.", 3000);
+    sendCmd(ui->lineCmd->text());
+    ui->statusbar->showMessage("Success to send command.", 3000);
 }
 
 void MainWindow::on_cmdBtn_clicked()
@@ -663,5 +647,16 @@ void MainWindow::on_cmdBtn_clicked()
             ui->lineRsp->setVisible(1);
         }
     }
+}
+
+
+void MainWindow::on_syncBtn_clicked()
+{
+    if (ui->syncBtn->isChecked())
+        // open active notification
+        sendCmd("NFP 1");
+    else
+        // close active notification
+        sendCmd("NFP 0");
 }
 

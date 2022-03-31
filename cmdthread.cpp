@@ -23,12 +23,13 @@ int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
 
     CMDThread *thread = (CMDThread *)pContext;
 
+    thread->busy = false;
+
     // extract string from struct
     QString rsp = QString(QLatin1String((char *)thread->m_Cmd.m_Rsp));
     rsp.remove("\r\n", Qt::CaseInsensitive);
-//    qDebug() << " > " << rsp << Qt::endl;
+    qDebug() << " > " << rsp << Qt::endl;
     emit thread->sendRsp(rsp);
-    thread->busy = false;
 
     return 0;
 }
@@ -44,23 +45,15 @@ int	CALLBACK NotifyCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     UNREFERENCED_PARAMETER(pCaller);
     UNREFERENCED_PARAMETER(pv);
 
-    /*
-    char *dlgn = (char *)pv;
-    QString rsp(dlgn);
-    QListWidgetItem *item = new QListWidgetItem;
-    QString str = " > ";
+    char *notify = (char *)pv;
+    CMDThread *thread = (CMDThread *)pContext;
+
+    // extract string from struct
+    QString rsp(notify);
     rsp.remove("\r\n", Qt::CaseInsensitive);
-    str.append(rsp);
-    item->setText(str);
-    uiself->listWidget->addItem(item);
-    uiself->listWidget->setCurrentRow(uiself->listWidget->count() - 1);
-    if (rsp.contains("NFP",Qt::CaseSensitive))
-    {
-        rsp.remove("NFP ");
-        double cvVal = rsp.toDouble() / 100;
-        uiself->cvLabel->setText(QString::number(cvVal,10,2));
-    }
-    */
+    qDebug() << "Notify > " << rsp << Qt::endl;
+    emit thread->sendRsp(rsp);
+
     return 0;
 
 }
@@ -76,13 +69,14 @@ int	CALLBACK ErrorCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     UNREFERENCED_PARAMETER(pCaller);
     UNREFERENCED_PARAMETER(pv);
 
-
     return 0;
 }
 
 // send command function
 bool CMDThread::sendStrCmd(QString cmd)
 {
+    qDebug() << " < " << cmd << Qt::endl;
+
     // command initiate
     int	len;
     memset(&m_Cmd, 0x00, sizeof(MDK_MSL_CMD));
@@ -127,14 +121,24 @@ CMDThread::~CMDThread()
 
 }
 
-void CMDThread::receiveCmd(QString cmd)
+void CMDThread::receiveCmd()
 {
-    if (!busy)
+    while(!cmdFIFO.isEmpty())
     {
-//        qDebug() << " < " << cmd << Qt::endl;
-        sendStrCmd(cmd);
-        busy = true;
+        if (!busy)
+        {
+            sendStrCmd(cmdFIFO.dequeue());
+            busy = true;
+        }
+        else
+        {
+            // wait without blocking the thread
+            QEventLoop loop;
+            QTimer::singleShot(100, &loop, SLOT(quit()));  // time unit: msec
+            loop.exec();
+        }
     }
+    return;
 }
 
 void CMDThread::receiveRegister()

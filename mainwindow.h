@@ -27,28 +27,27 @@ public:
 
     void closeEvent(QCloseEvent *event);
     bool quitSymbol = false;
-
-    int escapeDist = 3000;
-    bool logStatus = false;
-    int currObj = 0;  // range: 0-5
-    int focusNearLimit[6] = {1050000, 1050000, 1050000, 1050000, 1050000}; // unit: 0.01um
-    double beforeEscape; // unit: 1um
-    double currZ; // unit: 1um
     bool firstImageMode = true;
     bool advCmd = false;
+
+    int escapeDist = 3000;
+    int currObj = 0;  // range: 0-5
+    int focusNearLimit[6] = {1050000, 1050000, 1050000, 1050000, 1050000}; // unit: 0.01 um
+    double beforeEscape; // unit: 1 um
+    double currZ; // unit: 1 um
 
     void *pInterface;
     ptr_CloseInterface ptr_closeIf;
 
 private:
     void ctlSettings(bool);
-    bool sendCmd(QString cmd, int caseIn, int subIn);
+    bool sendCmd(QString cmd);
     void processCallback(QString);
     bool focusMove(double);
 
 signals:
     void sendRegister();
-    void sendCmdSignal(QString cmd);
+    void sendCmdSignal();
 
 private slots:
     void receivePointer(void*);
@@ -78,6 +77,8 @@ private slots:
     void on_lineCmd_returnPressed();
 
     void on_cmdBtn_clicked();
+
+    void on_syncBtn_clicked();
 
 private:
     Ui::MainWindow *ui;

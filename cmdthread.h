@@ -2,7 +2,9 @@
 #define CMDTHREAD_H
 
 #include <QThread>
-#include <QMessageBox>
+#include <QQueue>
+#include <QEventLoop>
+#include <QTimer>
 #include <cmd.h>
 #include <DLL.h>
 
@@ -21,11 +23,10 @@ public:
     ptr_RegisterCallback ptr_reCb;
     MDK_MSL_CMD	m_Cmd;
 
-    int caseIndex = 0;
-    int subIndex = 0;
-
+    bool quitCmd = false;
     bool busy = false;
-    QString rsp;
+
+    QQueue<QString> cmdFIFO;
 
     friend int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam, PVOID pv, PVOID pContext, PVOID pCaller);
     friend int CALLBACK NotifyCallback(ULONG MsgId, ULONG wParam, ULONG lParam, PVOID pv, PVOID pContext, PVOID pCaller);
@@ -34,10 +35,11 @@ public:
 protected:
     void run();
     bool sendStrCmd(QString cmd);
+    void sendCmdFIFO();
 
 private slots:
     void receiveRegister();
-    void receiveCmd(QString cmd);
+    void receiveCmd();
 
 signals:
     void sendRegisterResult(bool result);
