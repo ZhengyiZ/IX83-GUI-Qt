@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent,
 
     // disable all the components
     ctlSettings(false);
+    ui->groupBox->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -62,7 +63,7 @@ bool MainWindow::sendCmd(QString cmd)
 void MainWindow::ctlSettings(bool a)
 {
     ui->switchObjBtn->setEnabled(a);
-    ui->groupBox->setEnabled(a);
+//    ui->groupBox->setEnabled(a);
     ui->cmdBtn->setEnabled(a);
     ui->lineCmd->setEnabled(a);
     ui->lineRsp->setEnabled(a);
@@ -273,9 +274,42 @@ void MainWindow::processCallback(QString str)
     else if (str.contains("OPE", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Failed to change idle/setting mode.", 3000);
+        {
+            if (initSymbol)
+            {
+                if( QMessageBox::warning(this, "Failed to enter setting mode",
+                                         str + "\n", // 暂时没有复现该问题
+                                         QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Cancel)
+                        == QMessageBox::Retry)
+                {
+                    // insert the OPE 0 command at the front of the cmdFIFO
+                    QQueue tmp = thread->cmdFIFO;
+                    thread->cmdFIFO.clear();
+                    thread->cmdFIFO.enqueue("OPE 0");
+                    while (!tmp.isEmpty())
+                        thread->cmdFIFO.enqueue(tmp.dequeue());
+                    emit sendCmdSignal();
+                }
+                else
+                {
+                    // exit the program
+                    thread->quitCmd = true;
+                    sendCmd("L 0,0");
+                }
+            }
+            else
+                ui->statusbar->showMessage("Failed to change idle/setting mode.", 3000);
+        }
         else if (str.contains("+", Qt::CaseSensitive))
-            ui->statusbar->showMessage("Log in success.");
+        {
+            if (initSymbol)
+            {
+                ui->statusbar->showMessage("Log in success.");
+                initSymbol = false;
+                // unlock controls except groupBox for imaging mode
+                ctlSettings(true);
+            }
+        }
     }
 
     // focus position active notification
@@ -356,11 +390,11 @@ void MainWindow::processCallback(QString str)
             ui->statusbar->showMessage("Failed to switch imaging mode.", 3000);
         else if (str.contains("+", Qt::CaseSensitive))
         {
-            if (firstImageMode)
+            if (firstImaging)
             {
                 ui->statusbar->showMessage("Initialization complete, ready to work.", 3000);
-                ctlSettings(true);
-                firstImageMode = false;
+                ui->groupBox->setEnabled(true);
+                firstImaging = false;
             }
             else
                 ui->statusbar->showMessage("Switching imaging mode complete.", 3000);
@@ -385,6 +419,40 @@ void MainWindow::processCallback(QString str)
             ui->statusbar->showMessage("Setting focusing unit speed complete.", 3000);
     }
 
+    // log in
+    else if (str.contains("L", Qt::CaseSensitive))
+    {
+        if (str.contains("!", Qt::CaseSensitive))
+        {
+            if (initSymbol)
+            {
+                if( QMessageBox::critical(this, "Failed to log in",
+                                         str + "\n" +
+                                         "TPC should be at the MENU interface with a Start Operation button.\n"
+                                         "If not, please set TPC to MENU interface, wait button enabled, "
+                                         "then press Retry.",
+                                         QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Cancel)
+                        == QMessageBox::Retry)
+                {
+                    // insert the L 1,0 command at the front of the cmdFIFO
+                    QQueue tmp = thread->cmdFIFO;
+                    thread->cmdFIFO.clear();
+                    thread->cmdFIFO.enqueue("L 1,0");
+                    while (!tmp.isEmpty())
+                        thread->cmdFIFO.enqueue(tmp.dequeue());
+                    emit sendCmdSignal();
+                }
+                else
+                {
+                    // exit the program
+                    thread->quitCmd = true;
+                    receiveRsp("quit");
+                }
+            }
+            else
+                ui->statusbar->showMessage("Failed to log in.", 3000);
+        }
+    }
 }
 
 bool MainWindow::focusMove(double target)
@@ -481,8 +549,11 @@ void MainWindow::on_escapeBtn_clicked()
             target = currZ - escapeDist;
 
         focusMove(target);
-        ui->zSlider->setValue((int)currZ);
-        ui->zValue->setValue(currZ);
+        if (!ui->syncBtn->isChecked())
+        {
+            ui->zSlider->setValue((int)currZ);
+            ui->zValue->setValue(currZ);
+        }
         ui->escapeBtn->setChecked(true);
 
     }
@@ -490,8 +561,11 @@ void MainWindow::on_escapeBtn_clicked()
     {
         // from Checked to Unchecked
         focusMove(beforeEscape);
-        ui->zSlider->setValue((int)currZ);
-        ui->zValue->setValue(currZ);
+        if (!ui->syncBtn->isChecked())
+        {
+            ui->zSlider->setValue((int)currZ);
+            ui->zValue->setValue(currZ);
+        }
         ui->escapeBtn->setChecked(false);
 
     }
@@ -600,8 +674,11 @@ void MainWindow::on_zValue_valueChanged(double value)
     if (currZ != value)
     {
         focusMove(value);
-        ui->zSlider->setValue((int)currZ);
-        ui->zValue->setValue(currZ);
+        if (!ui->syncBtn->isChecked())
+        {
+            ui->zSlider->setValue((int)currZ);
+            ui->zValue->setValue(currZ);
+        }
     }
     return;
 }

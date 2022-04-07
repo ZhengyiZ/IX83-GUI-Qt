@@ -26,11 +26,13 @@ IFSelection::IFSelection(QWidget *parent, void* pIF,
         QMessageBox::StandardButton result =
                 QMessageBox::critical(NULL,"Failed to enumerate interface",
                                            "There is no Olympus IX83 connected, "
-                                           "please check physical connections and 1394 drivers.",
+                                           "please check the switch of CBH, "
+                                           "1394 connections and 1394 drivers of your PC.",
                                            QMessageBox::Retry|QMessageBox::Cancel);
         switch (result)
         {
         case QMessageBox::Retry:
+            portCount = this->ptr_enumIf();
             break;
         default:
             qApp->exit();

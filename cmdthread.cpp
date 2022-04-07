@@ -22,15 +22,23 @@ int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     UNREFERENCED_PARAMETER(pv);
 
     CMDThread *thread = (CMDThread *)pContext;
+    if (thread == 0x0)
+    {
+        qDebug() << "Exception";
+        // 当TPC没有打开（或显示奥林巴斯蓝色界面），但CBH电源打开时，前面的操作都正常
+        // 但这里回调的pContext和pCaller都为0x0，程序会卡死
+        // 我没有想到如何从这里退出程序
+    }
+    else
+    {
+        thread->busy = false;
 
-    thread->busy = false;
-
-    // extract string from struct
-    QString rsp = QString(QLatin1String((char *)thread->m_Cmd.m_Rsp));
-    rsp.remove("\r\n", Qt::CaseInsensitive);
-    qDebug() << " > " << rsp << Qt::endl;
-    emit thread->sendRsp(rsp);
-
+        // extract string from struct
+        QString rsp = QString(QLatin1String((char *)thread->m_Cmd.m_Rsp));
+        rsp.remove("\r\n", Qt::CaseInsensitive);
+        qDebug() << " > " << rsp << Qt::endl;
+        emit thread->sendRsp(rsp);
+    }
     return 0;
 }
 

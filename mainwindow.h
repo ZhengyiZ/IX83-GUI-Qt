@@ -27,7 +27,8 @@ public:
 
     void closeEvent(QCloseEvent *event);
     bool quitSymbol = false;
-    bool firstImageMode = true;
+    bool initSymbol = true;
+    bool firstImaging = true;
     bool advCmd = false;
 
     int escapeDist = 3000;
