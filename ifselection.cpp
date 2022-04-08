@@ -20,12 +20,12 @@ IFSelection::IFSelection(QWidget *parent, void* pIF,
 
     // enumerate interfaces
     portCount = this->ptr_enumIf();
-//    portCount = 3;    // cheat code in case you don't have an interface
+//    portCount = 1;    // cheat code in case you don't have an interface
     while (!portCount)
     {
         QMessageBox::StandardButton result =
-                QMessageBox::critical(NULL,"Failed to enumerate interface",
-                                           "There is no Olympus IX83 connected, "
+                QMessageBox::critical(NULL,"Connection Error",
+                                           "There is no Olympus IX83 detected, "
                                            "please check the switch of CBH, "
                                            "1394 connections and 1394 drivers of your PC.",
                                            QMessageBox::Retry|QMessageBox::Cancel);
@@ -70,10 +70,10 @@ void IFSelection::on_buttonBox_accepted()
 //        result = true;   // cheat code
         if (!result)
         {
-            QMessageBox::warning(NULL,"Failed to open interface",
+            QMessageBox::critical(NULL, "Interface Error",
                                   "Cloud not open port "
                                   + QString::number(ui->comboBox->currentIndex())
-                                  + "! Reopening the program may solve this problem.",
+                                  + "! Reopening the program may solve the problem.",
                                   QMessageBox::Ok);
             emit sendQuitFromDialog(true);
             return;

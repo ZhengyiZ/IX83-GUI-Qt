@@ -12,14 +12,18 @@ SOURCES += \
     cmdthread.cpp \
     ifselection.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    pollthread.cpp \
+    verlabel.cpp
 
 HEADERS += \
     DLL.h \
     cmd.h \
     cmdthread.h \
     ifselection.h \
-    mainwindow.h
+    mainwindow.h \
+    pollthread.h \
+    verlabel.h
 
 FORMS += \
     ifselection.ui \

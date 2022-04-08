@@ -3,10 +3,11 @@
 
 #include <QMainWindow>
 #include <QCloseEvent>
-#include <QLabel>
 #include <QMessageBox>
 #include "cmdthread.h"
 #include "ifselection.h"
+#include "verlabel.h"
+#include "pollthread.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -45,16 +46,21 @@ private:
     bool sendCmd(QString cmd);
     void processCallback(QString);
     bool focusMove(double);
+    void insertCmdFIFO(QString);
+    void quitProgram(bool);
 
 signals:
     void sendRegister();
     void sendCmdSignal();
+    void sendPolling();
 
 private slots:
     void receivePointer(void*);
-    void receiveQuit(bool);
+    void receiveQuitFromIFDialog(bool);
     void receiveRegisterResult(bool);
     void receiveRsp(QString rsp);
+    void receiveImaging(int mode);
+    void receiveEmergencyQuit();
 
     void on_switchObjBtn_clicked();
 
@@ -62,28 +68,28 @@ private slots:
     void on_conBtn_clicked();
 
     void on_fineBtn_clicked();
+    void on_roughBtn_clicked();
+    void on_syncBtn_clicked();
     void on_escapeBtn_clicked();
 
+    void on_zSlider_sliderReleased();
+    void on_zValue_valueChanged(double value);
+
+    void on_maxLine_returnPressed();
     void on_sliderSetBtn_clicked();
     void on_speedSetBtn_clicked();
 
-    void on_zSlider_sliderReleased();
-
-    void on_zValue_valueChanged(double value);
-
-    void on_roughBtn_clicked();
-
-    void on_maxLine_returnPressed();
-
     void on_lineCmd_returnPressed();
-
     void on_cmdBtn_clicked();
 
-    void on_syncBtn_clicked();
+    void on_eye100_clicked();
+    void on_eye50_clicked();
+    void on_eye0_clicked();
 
 private:
     Ui::MainWindow *ui;
-    CMDThread *thread;
+    CMDThread *cmdTh;
+    pollThread *pollTh;
 };
 
 #endif // MAINWINDOW_H

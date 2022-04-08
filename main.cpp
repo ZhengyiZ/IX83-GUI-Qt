@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     QObject::connect(IFdialog, SIGNAL(sendPointer(void*)),
                      w, SLOT(receivePointer(void*)));
     QObject::connect(IFdialog, SIGNAL(sendQuitFromDialog(bool)),
-                     w, SLOT(receiveQuit(bool)));
+                     w, SLOT(receiveQuitFromIFDialog(bool)));
 
     // auto connect when there is only one port exists
     if (IFdialog->portCount == 1)

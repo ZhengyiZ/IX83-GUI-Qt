@@ -1,5 +1,6 @@
 #include "cmdthread.h"
-#include <QDebug>
+
+bool emergencyStop = false;
 
 CMDThread::CMDThread(QObject *parent,
                      ptr_SendCommand ptr_sendCmd,
@@ -21,23 +22,23 @@ int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     UNREFERENCED_PARAMETER(pCaller);
     UNREFERENCED_PARAMETER(pv);
 
-    CMDThread *thread = (CMDThread *)pContext;
-    if (thread == 0x0)
+    CMDThread *cmdTh = (CMDThread *)pContext;
+    if (cmdTh == 0x0)
     {
-        qDebug() << "Exception";
-        // 当TPC没有打开（或显示奥林巴斯蓝色界面），但CBH电源打开时，前面的操作都正常
+        qDebug() << "Exception" << Qt::endl;
+        // 当TPC没有打开，但CBH电源打开时，前面的操作都正常
         // 但这里回调的pContext和pCaller都为0x0，程序会卡死
-        // 我没有想到如何从这里退出程序
+        emergencyStop = true;
     }
     else
     {
-        thread->busy = false;
+        cmdTh->busy = false;
 
         // extract string from struct
-        QString rsp = QString(QLatin1String((char *)thread->m_Cmd.m_Rsp));
+        QString rsp = QString(QLatin1String((char *)cmdTh->m_Cmd.m_Rsp));
         rsp.remove("\r\n", Qt::CaseInsensitive);
         qDebug() << " > " << rsp << Qt::endl;
-        emit thread->sendRsp(rsp);
+        emit cmdTh->sendRsp(rsp);
     }
     return 0;
 }
@@ -54,13 +55,13 @@ int	CALLBACK NotifyCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     UNREFERENCED_PARAMETER(pv);
 
     char *notify = (char *)pv;
-    CMDThread *thread = (CMDThread *)pContext;
+    CMDThread *cmdTh = (CMDThread *)pContext;
 
     // extract string from struct
     QString rsp(notify);
     rsp.remove("\r\n", Qt::CaseInsensitive);
     qDebug() << "Notify > " << rsp << Qt::endl;
-    emit thread->sendRsp(rsp);
+    emit cmdTh->sendRsp(rsp);
 
     return 0;
 
@@ -137,6 +138,13 @@ void CMDThread::receiveCmd()
         {
             sendStrCmd(cmdFIFO.dequeue());
             busy = true;
+        }
+        if (emergencyStop)
+        {
+            busy = false;
+            emergencyStop = false;
+            emit sendEmergencyQuit();
+            return;
         }
         else
         {

@@ -9,27 +9,38 @@ MainWindow::MainWindow(QWidget *parent,
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    // set mainwindow
     this->setWindowTitle("Olympus IX83 Control");
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
+
+    // set version label
+    verLabel *KLAB = new verLabel("K-LAB", this);
+    QFont ft("Fredericka the Great", 16);
+    KLAB->setFont(ft);
+    KLAB->setWhatsThis("version information");
+    KLAB->setCursor(Qt::PointingHandCursor);
+    ui->verticalLayout_4->insertWidget(0, KLAB, 0, Qt::AlignCenter | Qt::AlignVCenter);
 
     // pass parameters
     this->pInterface = nullptr;
     this->ptr_closeIf = ptr_closeIf;
 
-    // create a new wait sub thread
-    thread = new CMDThread(nullptr, ptr_sendCmd, ptr_reCb);
+    // create a command thread
+    cmdTh = new CMDThread(nullptr, ptr_sendCmd, ptr_reCb);
 
-    // emit command to thread
+    // emit command to cmd thread
     connect(this, SIGNAL(sendCmdSignal()),
-            thread, SLOT(receiveCmd()), Qt::QueuedConnection);
+            cmdTh, SLOT(receiveCmd()), Qt::QueuedConnection);
 
-    // receive response from thread
-    connect(thread, SIGNAL(sendRsp(QString)),
+    // receive response from cmd thread
+    connect(cmdTh, SIGNAL(sendRsp(QString)),
             this, SLOT(receiveRsp(QString)), Qt::QueuedConnection);
 
     // in order to solve the problem that thread cannot draw QMessageBox
-    connect(this, SIGNAL(sendRegister()), thread, SLOT(receiveRegister()));
-    connect(thread, SIGNAL(sendRegisterResult(bool)), this, SLOT(receiveRegisterResult(bool)));
+    connect(this, SIGNAL(sendRegister()), cmdTh, SLOT(receiveRegister()));
+    connect(cmdTh, SIGNAL(sendRegisterResult(bool)), this, SLOT(receiveRegisterResult(bool)));
+    connect(cmdTh, SIGNAL(sendEmergencyQuit()), this, SLOT(receiveEmergencyQuit()));
 
     // init settings
     ui->minLine->setValidator(new QIntValidator(0,10500,this));
@@ -44,7 +55,14 @@ MainWindow::MainWindow(QWidget *parent,
 
     // disable all the components
     ctlSettings(false);
-    ui->groupBox->setEnabled(false);
+    ui->imagingBox->setEnabled(false);
+
+    // create a polling thread
+    pollTh = new pollThread(nullptr);
+    connect(this, SIGNAL(sendPolling()), pollTh, SLOT(polling()), Qt::QueuedConnection);
+    connect(pollTh, SIGNAL(sendImaging(int)), this, SLOT(receiveImaging(int)), Qt::QueuedConnection);
+    pollTh->start();
+
 }
 
 MainWindow::~MainWindow()
@@ -52,9 +70,31 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::insertCmdFIFO(QString cmd)
+{
+    QQueue tmp = cmdTh->cmdFIFO;
+    cmdTh->cmdFIFO.clear();
+    cmdTh->cmdFIFO.enqueue(cmd);
+    while (!tmp.isEmpty())
+        cmdTh->cmdFIFO.enqueue(tmp.dequeue());
+    emit sendCmdSignal();
+}
+
+void MainWindow::quitProgram(bool login)
+{
+    pollTh->quitSymbol = true;
+    cmdTh->quitSymbol = true;
+    cmdTh->cmdFIFO.clear();
+
+    if (login)
+        sendCmd("L 0,0");
+    else
+        receiveRsp("quit");
+}
+
 bool MainWindow::sendCmd(QString cmd)
 {
-    thread->cmdFIFO.enqueue(cmd);
+    cmdTh->cmdFIFO.enqueue(cmd);
     emit sendCmdSignal();
     ui->lineCmd->setText(cmd);
     return true;
@@ -63,7 +103,8 @@ bool MainWindow::sendCmd(QString cmd)
 void MainWindow::ctlSettings(bool a)
 {
     ui->switchObjBtn->setEnabled(a);
-//    ui->groupBox->setEnabled(a);
+//    ui->imagingBox->setEnabled(a);
+    ui->eyeBox->setEnabled(a);
     ui->cmdBtn->setEnabled(a);
     ui->lineCmd->setEnabled(a);
     ui->lineRsp->setEnabled(a);
@@ -78,16 +119,27 @@ void MainWindow::ctlSettings(bool a)
     return;
 }
 
+void MainWindow::receiveEmergencyQuit()
+{
+    if( QMessageBox::critical(this, "TPC connection error",
+                             "TPC should be powered on before running this program.\n"
+                             "Please check the power of TPC and the connection between CBH and TPC.",
+                             QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Cancel)
+            == QMessageBox::Retry)
+        insertCmdFIFO("GOB 1");
+    else
+        quitProgram(false);
+}
+
 // applicatioin exit inquiry
-// close interface & quit the command thread
-// NOTE: the SDK library has a defect that if an interface is not closed,
-// it will not open next time until rebooting OS
 void MainWindow::closeEvent (QCloseEvent *e)
 {
     if(quitSymbol)
     {
-        thread->quit();
-        thread->wait();
+        cmdTh->quit();
+        cmdTh->wait();
+        pollTh->quit();
+        pollTh->wait();
         e->accept();
         qApp->quit();
     }
@@ -99,15 +151,14 @@ void MainWindow::closeEvent (QCloseEvent *e)
                                   QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes )
                 == QMessageBox::Yes)
         {
-            thread->quitCmd = true;
-            sendCmd("L 0,0");
+            quitProgram(true);
             ui->statusbar->showMessage("Logging out from microscope, which will be fast.");
         }
         e->ignore();
     }
 }
 
-void MainWindow::receiveQuit(bool symbol)
+void MainWindow::receiveQuitFromIFDialog(bool symbol)
 {
     this->quitSymbol = symbol;
     return;
@@ -125,8 +176,7 @@ void MainWindow::receiveRegisterResult(bool result)
             switch (result)
             {
             case QMessageBox::Cancel:
-                quitSymbol = true;
-                qApp->quit();
+                quitProgram(false);
                 return;
             default:
                 emit sendRegister();
@@ -138,8 +188,8 @@ void MainWindow::receiveRegisterResult(bool result)
 void MainWindow::receivePointer(void *pInterface_new)
 {
     this->pInterface = pInterface_new;
-    this->thread->pInterface = pInterface_new;
-    this->thread->start();
+    this->cmdTh->pInterface = pInterface_new;
+    this->cmdTh->start();
 
     //// Initialization Pipeline ////
 
@@ -156,7 +206,7 @@ void MainWindow::receivePointer(void *pInterface_new)
     // 2.log into remote mode
     sendCmd("L 1,0");
 
-    // 3.log into setting mode
+    // 3.log into operation mode
     sendCmd("OPE 0");
 
     // 4.get current objective lens
@@ -171,7 +221,10 @@ void MainWindow::receivePointer(void *pInterface_new)
     // 7.get current focus position
     sendCmd("FP?");
 
-    // 8.set imaging mode to wide field at first
+    // 8.get current left port ratio
+    sendCmd("BIL?");
+
+    // 9.set imaging mode to wide field at first
     on_wfBtn_clicked();
 
     //// Initialization Pipeline Ends ////
@@ -183,12 +236,12 @@ void MainWindow::receiveRsp(QString rsp)
     ui->lineRsp->setText(rsp);
     processCallback(rsp);
 
-    if (thread->quitCmd)
+    if (cmdTh->quitSymbol)
     {
-        // closeEvent
+        // close interface
         this->ptr_closeIf(pInterface);
         quitSymbol = true;
-        qApp->quit();
+        qApp->quit(); // closeEvent
         return;
     }
 
@@ -270,32 +323,21 @@ void MainWindow::processCallback(QString str)
             escapeDist = str.right(1).toInt()*1000;
     }
 
-    // setting mode
+    // operation mode
     else if (str.contains("OPE", Qt::CaseSensitive))
     {
         if (str.contains("!", Qt::CaseSensitive))
         {
             if (initSymbol)
             {
-                if( QMessageBox::warning(this, "Failed to enter setting mode",
+                if( QMessageBox::critical(this, "Operation mode error",
                                          str + "\n", // 暂时没有复现该问题
                                          QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Cancel)
                         == QMessageBox::Retry)
-                {
-                    // insert the OPE 0 command at the front of the cmdFIFO
-                    QQueue tmp = thread->cmdFIFO;
-                    thread->cmdFIFO.clear();
-                    thread->cmdFIFO.enqueue("OPE 0");
-                    while (!tmp.isEmpty())
-                        thread->cmdFIFO.enqueue(tmp.dequeue());
-                    emit sendCmdSignal();
-                }
+                    insertCmdFIFO("OPE 0");
+
                 else
-                {
-                    // exit the program
-                    thread->quitCmd = true;
-                    sendCmd("L 0,0");
-                }
+                    quitProgram(true);
             }
             else
                 ui->statusbar->showMessage("Failed to change idle/setting mode.", 3000);
@@ -306,7 +348,7 @@ void MainWindow::processCallback(QString str)
             {
                 ui->statusbar->showMessage("Log in success.");
                 initSymbol = false;
-                // unlock controls except groupBox for imaging mode
+                // unlock controls except imagingBox for imaging mode
                 ctlSettings(true);
             }
         }
@@ -361,6 +403,29 @@ void MainWindow::processCallback(QString str)
         }
     }
 
+    else if (str.contains("BIL"))
+    {
+        if (str.contains("!", Qt::CaseSensitive))
+            ui->statusbar->showMessage("Failed to switch eyepiece ratio.", 3000);
+        else if (str.contains("+", Qt::CaseSensitive))
+            ui->statusbar->showMessage("Switching eyepiece ratio complete.", 3000);
+        else if (str.contains(" ", Qt::CaseSensitive))
+        {
+            switch (str.right(1).toInt())
+            {
+            case 1:
+                ui->eye0->setChecked(true);
+                break;
+            case 2:
+                ui->eye50->setChecked(true);
+                break;
+            case 3:
+                ui->eye100->setChecked(true);
+                break;
+            }
+        }
+    }
+
     // focus near limit
     else if (str.contains("NL", Qt::CaseSensitive))
     {
@@ -393,7 +458,8 @@ void MainWindow::processCallback(QString str)
             if (firstImaging)
             {
                 ui->statusbar->showMessage("Initialization complete, ready to work.", 3000);
-                ui->groupBox->setEnabled(true);
+                ui->imagingBox->setEnabled(true);
+                emit sendPolling();
                 firstImaging = false;
             }
             else
@@ -426,28 +492,15 @@ void MainWindow::processCallback(QString str)
         {
             if (initSymbol)
             {
-                if( QMessageBox::critical(this, "Failed to log in",
+                if( QMessageBox::critical(this, "Login error",
                                          str + "\n" +
                                          "TPC should be at the MENU interface with a Start Operation button.\n"
-                                         "If not, please set TPC to MENU interface, wait button enabled, "
-                                         "then press Retry.",
+                                         "If not, please set TPC to the MENU interface, then press Retry.",
                                          QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Cancel)
                         == QMessageBox::Retry)
-                {
-                    // insert the L 1,0 command at the front of the cmdFIFO
-                    QQueue tmp = thread->cmdFIFO;
-                    thread->cmdFIFO.clear();
-                    thread->cmdFIFO.enqueue("L 1,0");
-                    while (!tmp.isEmpty())
-                        thread->cmdFIFO.enqueue(tmp.dequeue());
-                    emit sendCmdSignal();
-                }
+                    insertCmdFIFO("L 1,0");
                 else
-                {
-                    // exit the program
-                    thread->quitCmd = true;
-                    receiveRsp("quit");
-                }
+                    quitProgram(false);
             }
             else
                 ui->statusbar->showMessage("Failed to log in.", 3000);
@@ -472,25 +525,25 @@ void MainWindow::on_switchObjBtn_clicked()
     switchObjCmd.append(indexStr);
     ui->statusbar->showMessage("Switching objective lens...", 3000);
     sendCmd(switchObjCmd);
-    sendCmd("ESC2?");
+    sendCmd("OB?");
+    sendCmd("ESC2?"); // query the escape distance
+    sendCmd("NL?");   // query the near focus limit
     return;
 }
 
 void MainWindow::on_wfBtn_clicked()
 {
     ui->statusbar->showMessage("Setting imaging mode to wide field...", 3000);
-    sendCmd("MU2 5");
-    // open shutter
-    sendCmd("ESH2 0");
+    sendCmd("MU2 5");  // switch the turret to 5
+    sendCmd("ESH2 0"); // open shutter
     return;
 }
 
 void MainWindow::on_conBtn_clicked()
 {
     ui->statusbar->showMessage("Setting imaging mode to confocal...", 3000);
-    sendCmd("MU2 4");
-    // close shutter
-    sendCmd("ESH2 1");
+    sendCmd("MU2 4");  // switch the turret to 4
+    sendCmd("ESH2 1"); // close shutter
     return;
 }
 
@@ -737,3 +790,43 @@ void MainWindow::on_syncBtn_clicked()
         sendCmd("NFP 0");
 }
 
+
+void MainWindow::on_eye100_clicked()
+{
+    sendCmd("BIL 3");
+    sendCmd("BIL?");
+}
+
+
+void MainWindow::on_eye50_clicked()
+{
+    sendCmd("BIL 2");
+    sendCmd("BIL?");
+}
+
+void MainWindow::on_eye0_clicked()
+{
+    sendCmd("BIL 1");
+    sendCmd("BIL?");
+}
+
+void MainWindow::receiveImaging(int mode)
+{
+    switch(mode)
+    {
+    case 0:
+        if (!ui->wfBtn->isChecked())
+        {
+            ui->wfBtn->setChecked(true);
+            on_wfBtn_clicked();
+        }
+        break;
+    case 1:
+        if (!ui->conBtn->isChecked())
+        {
+            ui->conBtn->setChecked(true);
+            on_conBtn_clicked();
+        }
+        break;
+    }
+}

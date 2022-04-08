@@ -2,11 +2,15 @@
 #define CMDTHREAD_H
 
 #include <QThread>
+#include <QDebug>
 #include <QQueue>
 #include <QEventLoop>
 #include <QTimer>
 #include <cmd.h>
 #include <DLL.h>
+
+// for friend functions called by Olympus DLL
+extern bool emergencyStop;
 
 class CMDThread : public QThread
 {
@@ -23,7 +27,7 @@ public:
     ptr_RegisterCallback ptr_reCb;
     MDK_MSL_CMD	m_Cmd;
 
-    bool quitCmd = false;
+    bool quitSymbol = false;
     bool busy = false;
 
     QQueue<QString> cmdFIFO;
@@ -44,6 +48,7 @@ private slots:
 signals:
     void sendRegisterResult(bool result);
     void sendRsp(QString rsp);
+    void sendEmergencyQuit();
 
 private:
 
