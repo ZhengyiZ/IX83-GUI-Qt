@@ -241,7 +241,7 @@ void MainWindow::initSequence()
     enqueueCmd("DG 0,1"); // hide dialog
     enqueueCmd("OPE 0");
 
-//    // 10. set imaging mode to wide field
+    // 10. set imaging mode to wide field
 //    if (deckSymbol)
 //        if (deckNum == 2)
 //        {
@@ -475,7 +475,11 @@ void MainWindow::processCallback(QString str)
 
     else if (str.contains("OB", Qt::CaseSensitive))
     {
-        if (str.contains(" "))
+        if (str.contains("+"))
+        {
+            // in case "NOB +"
+        }
+        else if (str.contains(" "))
         {
             currObj = str.right(1).toInt()-1;
             QString after = QString::number(currObj+1);
@@ -1156,3 +1160,9 @@ void MainWindow::on_actionLED_triggered(bool checked)
         enqueueCmd("TPIL 0");
     }
 }
+
+void MainWindow::on_actionAbout_IX83_triggered()
+{
+    QDesktopServices::openUrl(QUrl("https://www.olympus-lifescience.com/zh/microscopes/inverted/ixplore-pro/"));
+}
+

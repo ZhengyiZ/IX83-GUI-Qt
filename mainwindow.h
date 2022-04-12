@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QCloseEvent>
+#include <QDesktopServices>
+#include <QUrl>
 #include "cmdthread.h"
 #include "klabel.h"
 #include "setwindow.h"
@@ -87,8 +89,11 @@ private slots:
     // Menu Bar
     void on_actionFocus_triggered();
     void on_actionStay_on_Top_triggered(bool checked);
+    void on_actionLED_triggered(bool checked);
+
     void on_actionAbout_triggered();
     void on_actionAboutQt_triggered();
+    void on_actionAbout_IX83_triggered();
 
     void kLabelClicked();
 
@@ -111,8 +116,6 @@ private slots:
     void on_eye100_clicked();
     void on_eye50_clicked();
     void on_eye0_clicked();
-
-    void on_actionLED_triggered(bool checked);
 
 private:
     Ui::MainWindow *ui;

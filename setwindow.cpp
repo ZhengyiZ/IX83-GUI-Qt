@@ -7,6 +7,7 @@ SetWindow::SetWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    setWindowTitle("Focus Settings");
     // init settings
     ui->minLine->setValidator(new QIntValidator(0,10500,this));
     ui->maxLine->setValidator(new QIntValidator(0,10500,this));
