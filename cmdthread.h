@@ -2,12 +2,13 @@
 #define CMDTHREAD_H
 
 #include <QThread>
-#include <QDebug>
 #include <QQueue>
+#include <QDebug>
+#include <QStandardPaths>
+#include <QFile>
 #include <QEventLoop>
 #include <QTimer>
-#include <cmd.h>
-#include <DLL.h>
+#include "DLL.h"
 
 // for friend functions called by Olympus DLL
 extern bool emergencyStop;
@@ -29,6 +30,9 @@ public:
 
     bool quitSymbol = false;
     bool busy = false;
+    bool syncSymbol = false;
+
+    QString userDir;
 
     QQueue<QString> cmdFIFO;
 
@@ -38,17 +42,19 @@ public:
 
 protected:
     void run();
-    bool sendStrCmd(QString cmd);
-    void sendCmdFIFO();
+    bool sendCmdToSDK(QString cmd);
 
 private slots:
     void receiveRegister();
-    void receiveCmd();
+    void keepSendingCmd();
+    void sendCmdOnce();
 
 signals:
     void sendRegisterResult(bool result);
+    void sendNotify(QString);
     void sendRsp(QString rsp);
     void sendEmergencyQuit();
+    void sendImaging(int mode);
 
 private:
 

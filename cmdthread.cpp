@@ -9,6 +9,7 @@ CMDThread::CMDThread(QObject *parent,
 {
     this->ptr_sendCmd = ptr_sendCmd;
     this->ptr_reCb = ptr_reCb;
+    userDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 }
 
 //	COMMAND: call back entry from SDK port manager
@@ -24,12 +25,7 @@ int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
 
     CMDThread *cmdTh = (CMDThread *)pContext;
     if (cmdTh == 0x0)
-    {
-        qDebug() << "Exception" << Qt::endl;
-        // 当TPC没有打开，但CBH电源打开时，前面的操作都正常
-        // 但这里回调的pContext和pCaller都为0x0，程序会卡死
         emergencyStop = true;
-    }
     else
     {
         cmdTh->busy = false;
@@ -61,8 +57,7 @@ int	CALLBACK NotifyCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     QString rsp(notify);
     rsp.remove("\r\n", Qt::CaseInsensitive);
     qDebug() << "Notify > " << rsp << Qt::endl;
-    emit cmdTh->sendRsp(rsp);
-
+    emit cmdTh->sendNotify(rsp);
     return 0;
 
 }
@@ -81,8 +76,7 @@ int	CALLBACK ErrorCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
     return 0;
 }
 
-// send command function
-bool CMDThread::sendStrCmd(QString cmd)
+bool CMDThread::sendCmdToSDK(QString cmd)
 {
     qDebug() << " < " << cmd << Qt::endl;
 
@@ -130,13 +124,13 @@ CMDThread::~CMDThread()
 
 }
 
-void CMDThread::receiveCmd()
+void CMDThread::keepSendingCmd()
 {
-    while(!cmdFIFO.isEmpty())
+    while(!quitSymbol)
     {
-        if (!busy)
+        if (!busy && !cmdFIFO.isEmpty())
         {
-            sendStrCmd(cmdFIFO.dequeue());
+            sendCmdToSDK(cmdFIFO.dequeue());
             busy = true;
         }
         if (emergencyStop)
@@ -146,15 +140,53 @@ void CMDThread::receiveCmd()
             emit sendEmergencyQuit();
             return;
         }
-        else
+        if (syncSymbol)
         {
-            // wait without blocking the thread
-            QEventLoop loop;
-            QTimer::singleShot(100, &loop, SLOT(quit()));  // time unit: msec
-            loop.exec();
+            QFile wf(userDir + "/.MINFLUX/wf.txt");
+            QFile conf(userDir + "/.MINFLUX/conf.txt");
+            if (wf.exists())
+            {
+                qDebug() << "pollThread > wf" << Qt::endl;
+                wf.remove();
+                emit sendImaging(0);
+            }
+            else if (conf.exists())
+            {
+                qDebug() << "pollThread > conf" << Qt::endl;
+                conf.remove();
+                emit sendImaging(1);
+            }
+//            else
+//                qDebug() << "pollThread > no file" << Qt::endl;
         }
+        // wait without blocking the thread
+        QEventLoop loop;
+        QTimer::singleShot(100, &loop, SLOT(quit()));  // time unit: msec
+        loop.exec();
     }
-    return;
+}
+
+void CMDThread::sendCmdOnce()
+{
+    while(!cmdFIFO.isEmpty())
+    {
+        if (!busy)
+        {
+            sendCmdToSDK(cmdFIFO.dequeue());
+            busy = true;
+        }
+        if (emergencyStop)
+        {
+            busy = false;
+            emergencyStop = false;
+            emit sendEmergencyQuit();
+            return;
+        }
+        // wait without blocking the thread
+        QEventLoop loop;
+        QTimer::singleShot(100, &loop, SLOT(quit()));  // time unit: msec
+        loop.exec();
+    }
 }
 
 void CMDThread::receiveRegister()

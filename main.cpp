@@ -1,14 +1,11 @@
 #include <QApplication>
 #include <QLibrary>
-#include <QMessageBox>
-#include <QStyleFactory>
 #include "mainwindow.h"
 #include "ifselection.h"
-#include "DLL.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication::setStyle(QStyleFactory::create("Fusion"));
+//    QApplication::setStyle(QStyleFactory::create("Fusion"));
     QApplication a(argc, argv);
 
     //// load DLL library ////
@@ -60,8 +57,7 @@ int main(int argc, char *argv[])
 
     ptr_init();
 
-    // create IFSelection dialog and mainwindow at the same time
-    // then connect their signals and slots
+    // create IFSelection dialog and mainwindow, and connect their signals and slots
     IFSelection *IFdialog = new IFSelection(nullptr, nullptr,
                                             ptr_enumIf, ptr_getInfo,
                                             ptr_openIf, ptr_closeIf);
@@ -70,7 +66,7 @@ int main(int argc, char *argv[])
     QObject::connect(IFdialog, SIGNAL(sendPointer(void*)),
                      w, SLOT(receivePointer(void*)));
     QObject::connect(IFdialog, SIGNAL(sendQuitFromDialog(bool)),
-                     w, SLOT(receiveQuitFromIFDialog(bool)));
+                     w, SLOT(receiveQuitFromDialog(bool)));
 
     // auto connect when there is only one port exists
     if (IFdialog->portCount == 1)
@@ -89,6 +85,7 @@ int main(int argc, char *argv[])
     else
     {
         w->show();
+        w->startCmdThread();
         return a.exec();
     }
 

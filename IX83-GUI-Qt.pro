@@ -11,23 +11,24 @@ CONFIG += c++11
 SOURCES += \
     cmdthread.cpp \
     ifselection.cpp \
+    klabel.cpp \
     main.cpp \
     mainwindow.cpp \
-    pollthread.cpp \
-    verlabel.cpp
+    setwindow.cpp
 
 HEADERS += \
     DLL.h \
     cmd.h \
     cmdthread.h \
     ifselection.h \
+    klabel.h \
     mainwindow.h \
-    pollthread.h \
-    verlabel.h
+    setwindow.h
 
 FORMS += \
     ifselection.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    setwindow.ui
 
 CONFIG += lrelease
 CONFIG += embed_translations

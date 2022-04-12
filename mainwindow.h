@@ -3,11 +3,9 @@
 
 #include <QMainWindow>
 #include <QCloseEvent>
-#include <QMessageBox>
 #include "cmdthread.h"
-#include "ifselection.h"
-#include "verlabel.h"
-#include "pollthread.h"
+#include "klabel.h"
+#include "setwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,58 +24,86 @@ public:
                ptr_CloseInterface ptr_closeIf = nullptr);
     ~MainWindow();
 
-    void closeEvent(QCloseEvent *event);
+    void startCmdThread();
     bool quitSymbol = false;
     bool initSymbol = true;
-    bool firstImaging = true;
     bool advCmd = false;
+    bool EN5symbol = false;
 
-    int escapeDist = 3000;
+    bool deckSymbol = false;
+    int deckNum = 1;
+
+    int escapeDist = 0;
     int currObj = 0;  // range: 0-5
+    int currDeckUnit = 0;  // range: 0-7
     int focusNearLimit[6] = {1050000, 1050000, 1050000, 1050000, 1050000}; // unit: 0.01 um
     double beforeEscape; // unit: 1 um
     double currZ; // unit: 1 um
+
+    Qt::WindowFlags windowFlags = Qt::Window|Qt::WindowTitleHint|
+            Qt::WindowMinimizeButtonHint|Qt::WindowCloseButtonHint;
 
     void *pInterface;
     ptr_CloseInterface ptr_closeIf;
 
 private:
     void ctlSettings(bool);
-    bool sendCmd(QString cmd);
-    void processCallback(QString);
-    bool focusMove(double);
-    void insertCmdFIFO(QString);
+    void initSequence();
     void quitProgram(bool);
+    void closeEvent(QCloseEvent *event);
+
+    void enqueueCmd(QString cmd);
+    void insertCmd(QString);
+
+    void syncWithTPC(QString);
+    void processNotify(QString);
+    void processCallback(QString);
+
+    void focusMove(double);
+    void stepSet(int);
 
 signals:
     void sendRegister();
-    void sendCmdSignal();
-    void sendPolling();
+    void sendCmdOnce();
+    void keepSendingCmd();
+    void sendSliderMinMax(int,int);
 
 private slots:
+    // with if dialog
     void receivePointer(void*);
-    void receiveQuitFromIFDialog(bool);
+    void receiveQuitFromDialog(bool);
+
+    // with cmd thread
+    void receiveEmergencyQuit();
     void receiveRegisterResult(bool);
     void receiveRsp(QString rsp);
+    void receiveNotify(QString notify);
     void receiveImaging(int mode);
-    void receiveEmergencyQuit();
 
-    void on_switchObjBtn_clicked();
+    // with settings window
+    void receiveFSPD(QString);
+    void receiveSliderSettings(int,int);
 
-    void on_wfBtn_clicked();
-    void on_conBtn_clicked();
+    // Menu Bar
+    void on_actionFocus_triggered();
+    void on_actionStay_on_Top_triggered(bool checked);
+    void on_actionAbout_triggered();
+    void on_actionAboutQt_triggered();
 
-    void on_fineBtn_clicked();
-    void on_roughBtn_clicked();
-    void on_syncBtn_clicked();
-    void on_escapeBtn_clicked();
+    void kLabelClicked();
+
+    // Controls
+    void on_objSelection_currentIndexChanged(int index);
+
+    void on_deckSelection_currentIndexChanged(int index);
+    void on_shutterBox_clicked();
+    void on_syncBox_stateChanged(int arg1);
 
     void on_zSlider_sliderReleased();
     void on_zValue_valueChanged(double value);
-
-    void on_maxLine_returnPressed();
-    void on_sliderSetBtn_clicked();
-    void on_speedSetBtn_clicked();
+    void on_coarseBox_clicked();
+    void on_fineBox_clicked();
+    void on_escapeBtn_clicked();
 
     void on_lineCmd_returnPressed();
     void on_cmdBtn_clicked();
@@ -86,10 +112,12 @@ private slots:
     void on_eye50_clicked();
     void on_eye0_clicked();
 
+    void on_actionLED_triggered(bool checked);
+
 private:
     Ui::MainWindow *ui;
     CMDThread *cmdTh;
-    pollThread *pollTh;
+    SetWindow *setWin;
 };
 
 #endif // MAINWINDOW_H
