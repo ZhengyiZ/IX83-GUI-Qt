@@ -464,7 +464,7 @@
            <enum>QAbstractSpinBox::UpDownArrows</enum>
           </property>
           <property name="keyboardTracking">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <property name="suffix">
            <string> μm</string>
