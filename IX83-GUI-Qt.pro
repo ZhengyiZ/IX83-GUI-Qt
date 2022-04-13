@@ -33,7 +33,18 @@ FORMS += \
 CONFIG += lrelease
 CONFIG += embed_translations
 
-RC_ICONS = app.ico
+RC_ICONS = $$PWD/res/icon.ico
+
+# Copy lib files to build directory
+LibFile = $$PWD/lib/*.*
+CONFIG(release, debug | release) {
+    OutLibFile = $${OUT_PWD}/release/*.*
+}else {
+    OutLibFile = $${OUT_PWD}/debug/*.*
+}
+LibFile = $$replace(LibFile, /, \\)
+OutLibFile = $$replace(OutLibFile, /, \\)
+QMAKE_PRE_LINK += copy $$LibFile $$OutLibFile
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
