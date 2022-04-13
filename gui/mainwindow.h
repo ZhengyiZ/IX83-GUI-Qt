@@ -5,8 +5,8 @@
 #include <QCloseEvent>
 #include <QDesktopServices>
 #include <QUrl>
-#include "cmdthread.h"
-#include "klabel.h"
+#include "base/cmdthread.h"
+#include "base/klabel.h"
 #include "setwindow.h"
 
 QT_BEGIN_NAMESPACE

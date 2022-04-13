@@ -1,6 +1,6 @@
 #ifndef DLL_H
 #define DLL_H
-#include <cmd.h>
+#include "cmd.h"
 
 typedef	int	(*ptr_Initialize)();
 

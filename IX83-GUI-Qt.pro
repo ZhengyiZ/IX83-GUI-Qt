@@ -9,31 +9,31 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    cmdthread.cpp \
-    ifselection.cpp \
-    klabel.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    setwindow.cpp
+    base/cmdthread.cpp \
+    base/klabel.cpp \
+    base/main.cpp \
+    gui/ifselection.cpp \
+    gui/mainwindow.cpp \
+    gui/setwindow.cpp
 
 HEADERS += \
-    DLL.h \
-    cmd.h \
-    cmdthread.h \
-    ifselection.h \
-    klabel.h \
-    mainwindow.h \
-    setwindow.h
+    base/DLL.h \
+    base/cmd.h \
+    base/cmdthread.h \
+    base/klabel.h \
+    gui/ifselection.h \
+    gui/mainwindow.h \
+    gui/setwindow.h
 
 FORMS += \
-    ifselection.ui \
-    mainwindow.ui \
-    setwindow.ui
+    gui/ifselection.ui \
+    gui/mainwindow.ui \
+    gui/setwindow.ui
 
 CONFIG += lrelease
 CONFIG += embed_translations
 
-RC_ICONS = $$PWD/res/icon.ico
+RC_ICONS = res/icon.ico
 
 # Copy lib files to build directory
 LibFile = $$PWD/lib/*.*

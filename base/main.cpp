@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QLibrary>
-#include "mainwindow.h"
-#include "ifselection.h"
+#include "gui/mainwindow.h"
+#include "gui/ifselection.h"
 
 int main(int argc, char *argv[])
 {
