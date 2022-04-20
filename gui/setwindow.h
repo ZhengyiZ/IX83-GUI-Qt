@@ -20,11 +20,13 @@ public:
 private slots:
     void receiveSliderMinMax(int min, int max);
 
-    void on_sliderSetBtn_clicked();
+    bool on_sliderSetBtn_clicked();
 
     void on_maxLine_returnPressed();
 
-    void on_speedSetBtn_clicked();
+    bool on_speedSetBtn_clicked();
+
+    void on_finalLine_returnPressed();
 
 signals:
     void sendSliderSettings(int min, int max);

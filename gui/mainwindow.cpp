@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent,
     // create a command thread
     cmdTh = new CMDThread(nullptr, ptr_sendCmd, ptr_reCb);
 
-    // emit command to cmd thread
+    // emit signal to cmd thread
     connect(this, SIGNAL(sendCmdOnce()),
             cmdTh, SLOT(sendCmdOnce()), Qt::QueuedConnection);
     connect(this, SIGNAL(keepSendingCmd()),
@@ -321,7 +321,7 @@ void MainWindow::receiveEmergencyQuit()
                              "Please check the power of TPC and the connection between CBH and TPC.",
                              QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Cancel)
             == QMessageBox::Retry)
-        insertCmd("GOB 1");
+        enqueueCmd("U?");
     else
         quitProgram(false);
 }
@@ -1165,4 +1165,3 @@ void MainWindow::on_actionAbout_IX83_triggered()
 {
     QDesktopServices::openUrl(QUrl("https://www.olympus-lifescience.com/zh/microscopes/inverted/ixplore-pro/"));
 }
-

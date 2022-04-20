@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>164</width>
-    <height>316</height>
+    <width>161</width>
+    <height>292</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>240</width>
+    <height>435</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
@@ -142,8 +148,11 @@
        <bold>false</bold>
       </font>
      </property>
-     <property name="statusTip">
+     <property name="toolTip">
       <string>Range: 0-10500, unit: μm.</string>
+     </property>
+     <property name="statusTip">
+      <string/>
      </property>
      <property name="inputMethodHints">
       <set>Qt::ImhDigitsOnly</set>
@@ -211,8 +220,11 @@
        <bold>false</bold>
       </font>
      </property>
-     <property name="statusTip">
+     <property name="toolTip">
       <string>Range: 0-10500, unit: μm.</string>
+     </property>
+     <property name="statusTip">
+      <string/>
      </property>
      <property name="inputMethodHints">
       <set>Qt::ImhDigitsOnly</set>
@@ -381,10 +393,10 @@
       </font>
      </property>
      <property name="toolTip">
-      <string/>
+      <string>Range: 1~700, unit: μm/sec.  Intergers only.</string>
      </property>
      <property name="statusTip">
-      <string>Range: 1~700, unit: μm/sec.  Intergers only.</string>
+      <string/>
      </property>
      <property name="inputMethodHints">
       <set>Qt::ImhDigitsOnly</set>
@@ -437,8 +449,11 @@
        <bold>false</bold>
       </font>
      </property>
-     <property name="statusTip">
+     <property name="toolTip">
       <string>Range: 1~3000, unit: μm/sec. Intergers only.</string>
+     </property>
+     <property name="statusTip">
+      <string/>
      </property>
      <property name="inputMethodHints">
       <set>Qt::ImhDigitsOnly</set>
@@ -491,8 +506,11 @@
        <bold>false</bold>
       </font>
      </property>
-     <property name="statusTip">
+     <property name="toolTip">
       <string>Range: 1~1000.  Intergers only.</string>
+     </property>
+     <property name="statusTip">
+      <string/>
      </property>
      <property name="inputMethodHints">
       <set>Qt::ImhDigitsOnly</set>

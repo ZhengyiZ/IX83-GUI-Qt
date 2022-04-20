@@ -21,7 +21,7 @@ SetWindow::~SetWindow()
     delete ui;
 }
 
-void SetWindow::on_speedSetBtn_clicked()
+bool SetWindow::on_speedSetBtn_clicked()
 {
     int init = ui->initLine->text().toInt();
     int constant = ui->constantLine->text().toInt();
@@ -32,18 +32,21 @@ void SetWindow::on_speedSetBtn_clicked()
         QMessageBox::warning(this,"Error",
                              "The init speed is not in range (1-700).");
         ui->initLine->setText("700");
+        return false;
     }
     else if (constant>3000 || constant<1)
     {
         QMessageBox::warning(this,"Error",
                              "The constant speed is not in range (1-3000).");
         ui->constantLine->setText("700");
+        return false;
     }
     else if (final>1000 || final<1)
     {
         QMessageBox::warning(this,"Error",
                              "The deceleration time is not in range (1-1000).");
         ui->finalLine->setText("60");
+        return false;
     }
     else
     {
@@ -54,11 +57,11 @@ void SetWindow::on_speedSetBtn_clicked()
         cmd.append(",");
         cmd.append(QString::number(final));
         emit sendFSPD(cmd);
+        return true;
     }
-    return;
 }
 
-void SetWindow::on_sliderSetBtn_clicked()
+bool SetWindow::on_sliderSetBtn_clicked()
 {
     int max = ui->maxLine->text().toInt();
     int min = ui->minLine->text().toInt();
@@ -68,21 +71,32 @@ void SetWindow::on_sliderSetBtn_clicked()
         QMessageBox::warning(this,"Error",
                              "The maximum value should not exceed 10500 μm.");
         ui->maxLine->setText("10500");
+        return false;
     }
     else if (min<0)
     {
         QMessageBox::warning(this,"Error",
                              "The minimum value should not be negative.");
         ui->minLine->setText("0");
+        return false;
     }
     else
+    {
         emit sendSliderSettings(min, max);
-    return;
+        return true;
+    }
 }
 
 void SetWindow::on_maxLine_returnPressed()
 {
-    on_sliderSetBtn_clicked();
+    if (on_sliderSetBtn_clicked())
+        close();
+}
+
+void SetWindow::on_finalLine_returnPressed()
+{
+    if (on_speedSetBtn_clicked())
+        close();
 }
 
 void SetWindow::receiveSliderMinMax(int min, int max)
