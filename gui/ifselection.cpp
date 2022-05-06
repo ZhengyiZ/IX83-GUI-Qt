@@ -10,6 +10,7 @@ IFSelection::IFSelection(QWidget *parent, void* pIF,
     ui(new Ui::IFSelection)
 {
     ui->setupUi(this);
+    setWindowFlags(Qt::WindowStaysOnTopHint);
 
     // pass parameters
     this->pIF = pIF;
@@ -24,7 +25,7 @@ IFSelection::IFSelection(QWidget *parent, void* pIF,
     while (!portCount)
     {
         QMessageBox::StandardButton result =
-                QMessageBox::critical(NULL,"Connection Error",
+                QMessageBox::critical(this,"Connection Error",
                                            "There is no Olympus IX83 detected, "
                                            "please check the switch of CBH, "
                                            "1394 connections and 1394 drivers of your PC.",
@@ -70,7 +71,7 @@ void IFSelection::on_buttonBox_accepted()
 //        result = true;   // cheat code
         if (!result)
         {
-            QMessageBox::critical(NULL, "Interface Error",
+            QMessageBox::critical(this, "Interface Error",
                                   "Cloud not open port "
                                   + QString::number(ui->comboBox->currentIndex())
                                   + "! Reopening the program may solve the problem.",

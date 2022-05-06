@@ -123,11 +123,15 @@ void MainWindow::closeEvent (QCloseEvent *e)
 // insert cmd FIFO only if necessary
 void MainWindow::insertCmd(QString cmd)
 {
+    cmdTh->quitSymbol = true;
     QQueue tmp = cmdTh->cmdFIFO;
     cmdTh->cmdFIFO.clear();
     cmdTh->cmdFIFO.enqueue(cmd);
     while (!tmp.isEmpty())
         cmdTh->cmdFIFO.enqueue(tmp.dequeue());
+    cmdTh->quitSymbol = false;
+    Sleep(200);
+    emit keepSendingCmd();
 }
 
 // enqueue cmd FIFO, recommended
@@ -321,7 +325,7 @@ void MainWindow::receiveEmergencyQuit()
                              "Please check the power of TPC and the connection between CBH and TPC.",
                              QMessageBox::Retry|QMessageBox::Cancel, QMessageBox::Cancel)
             == QMessageBox::Retry)
-        enqueueCmd("U?");
+        insertCmd("U?");
     else
         quitProgram(false);
 }
@@ -1126,7 +1130,7 @@ void MainWindow::on_actionFocus_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::about(this, "About this program",
-                       "Version: 2.5<br>"
+                       "Version: 2.5.1<br>"
                        "Author: Zhengyi Zhan<br><br>"
                        "Download Update: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/releases'>GitHub Releases</a><br>"
                        "Bug report: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/issues'>GitHub Issues</a><br>");
