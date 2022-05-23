@@ -182,6 +182,10 @@ void CMDThread::sendCmdOnce()
             emit sendEmergencyQuit();
             return;
         }
+        // wait without blocking the thread
+        QEventLoop loop;
+        QTimer::singleShot(100, &loop, SLOT(quit()));  // time unit: msec
+        loop.exec();
     }
 }
 

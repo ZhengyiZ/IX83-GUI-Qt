@@ -13,8 +13,6 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-extern Ui::MainWindow *uiself;
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -41,6 +39,7 @@ public:
     int focusNearLimit[6] = {1050000, 1050000, 1050000, 1050000, 1050000}; // unit: 0.01 um
     double beforeEscape; // unit: 1 um
     double currZ; // unit: 1 um
+    bool syncBeforeLock = false;
 
     Qt::WindowFlags windowFlags = Qt::Window|Qt::WindowTitleHint|
             Qt::WindowMinimizeButtonHint|Qt::WindowCloseButtonHint;
@@ -49,7 +48,7 @@ public:
     ptr_CloseInterface ptr_closeIf;
 
 private:
-    void ctlSettings(bool);
+    void ctlSettings(bool, bool);
     void initSequence();
     void quitProgram(bool);
     void closeEvent(QCloseEvent *event);
@@ -90,10 +89,12 @@ private slots:
     void on_actionFocus_triggered();
     void on_actionStay_on_Top_triggered(bool checked);
     void on_actionLED_triggered(bool checked);
+    void on_actionReset_winpos_triggered();
 
     void on_actionAbout_triggered();
     void on_actionAboutQt_triggered();
     void on_actionAbout_IX83_triggered();
+    void on_actionWinPos_triggered();
 
     void kLabelClicked();
 
@@ -104,6 +105,7 @@ private slots:
     void on_shutterBox_clicked();
     void on_syncBox_stateChanged(int arg1);
 
+    void on_lockBtn_clicked();
     void on_zSlider_sliderReleased();
     void on_zValue_valueChanged(double value);
     void on_coarseBox_clicked();

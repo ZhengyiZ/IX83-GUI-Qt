@@ -32,6 +32,12 @@ MainWindow::MainWindow(QWidget *parent,
     KLAB->setCursor(Qt::PointingHandCursor);
     ui->verticalLayout_4->insertWidget(0, KLAB, 0, Qt::AlignCenter | Qt::AlignVCenter);
 
+    // set window position and size
+    setMinimumHeight(392);
+    setMinimumWidth(340);
+    // for MINFLUX
+    on_actionReset_winpos_triggered();
+
     // pass parameters
     this->pInterface = nullptr;
     this->ptr_closeIf = ptr_closeIf;
@@ -61,7 +67,7 @@ MainWindow::MainWindow(QWidget *parent,
     // disable all the controls
     ui->lineCmd->setVisible(0);
     ui->lineRsp->setVisible(0);
-    ctlSettings(false);
+    ctlSettings(false, false);
 
 }
 
@@ -143,7 +149,7 @@ void MainWindow::enqueueCmd(QString cmd)
 }
 
 // set all the controls, like EN5 0
-void MainWindow::ctlSettings(bool a)
+void MainWindow::ctlSettings(bool a, bool fromLock)
 {
     ui->objSelection->setEnabled(a);
 
@@ -165,6 +171,9 @@ void MainWindow::ctlSettings(bool a)
     ui->deckSelection->setEnabled(a);
     ui->syncBox->setEnabled(a);
     ui->shutterBox->setEnabled(a);
+
+    if (!fromLock)
+        ui->lockBtn->setEnabled(a);
 }
 
 void MainWindow::initSequence()
@@ -246,12 +255,13 @@ void MainWindow::initSequence()
     enqueueCmd("OPE 0");
 
     // 10. set imaging mode to wide field
-//    if (deckSymbol)
-//        if (deckNum == 2)
-//        {
-//            enqueueCmd("MU2 5");
-//            enqueueCmd("ESH2 0");
-//        }
+    // for MINFLUX
+    if (deckSymbol)
+        if (deckNum == 2)
+        {
+            enqueueCmd("MU2 5");
+            enqueueCmd("ESH2 0");
+        }
 }
 
 // receive slider settings from the settings windows
@@ -513,8 +523,9 @@ void MainWindow::processCallback(QString str)
             {
                 ui->statusbar->showMessage("Initialization complete, ready to work.", 3000);
                 initSymbol = false;
-                ctlSettings(true);
-//                ui->syncBox->setChecked(true);
+                ctlSettings(true, false);
+                // for MINFLUX
+                ui->syncBox->setChecked(true);
             }
         }
     }
@@ -699,7 +710,7 @@ void MainWindow::processCallback(QString str)
     // en/disable TPC operation
     else if (str.contains("EN5 +", Qt::CaseSensitive))
     {
-        ctlSettings(EN5symbol);
+        ctlSettings(EN5symbol, ui->lockBtn->isChecked());
         EN5symbol = !EN5symbol;
     }
 }
@@ -1056,6 +1067,21 @@ void MainWindow::on_fineBox_clicked()
     stepSet(1);
 }
 
+void MainWindow::on_lockBtn_clicked()
+{
+    if (ui->lockBtn->isChecked())
+    {
+        syncBeforeLock = ui->syncBox->isChecked();
+        ui->syncBox->setChecked(false);
+        enqueueCmd("EN5 0");
+    }
+    else
+    {
+        enqueueCmd("EN5 1");
+        ui->syncBox->setChecked(syncBeforeLock);
+    }
+}
+
 void MainWindow::on_objSelection_currentIndexChanged(int index)
 {
     QString objIndex = QString::number(index+1);
@@ -1130,7 +1156,7 @@ void MainWindow::on_actionFocus_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::about(this, "About this program",
-                       "Version: 2.5.1<br>"
+                       "Version: 2.6<br>"
                        "Author: Zhengyi Zhan<br><br>"
                        "Download Update: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/releases'>GitHub Releases</a><br>"
                        "Bug report: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/issues'>GitHub Issues</a><br>");
@@ -1168,4 +1194,19 @@ void MainWindow::on_actionLED_triggered(bool checked)
 void MainWindow::on_actionAbout_IX83_triggered()
 {
     QDesktopServices::openUrl(QUrl("https://www.olympus-lifescience.com/zh/microscopes/inverted/ixplore-pro/"));
+}
+
+void MainWindow::on_actionWinPos_triggered()
+{
+    QMessageBox::about(this, "Window Position",
+                       "x:\t" + QString::number(x()) + "\n" +
+                       "y:\t" + QString::number(y()) + "\n" +
+                       "width:\t" + QString::number(width()) + "\n" +
+                       "height:\t" + QString::number(height()));
+}
+
+void MainWindow::on_actionReset_winpos_triggered()
+{
+    resize(347, 392);
+    move(1121, 335);
 }

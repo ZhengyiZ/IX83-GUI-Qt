@@ -429,6 +429,28 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
+         <widget class="QPushButton" name="lockBtn">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>微软雅黑</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Lock</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer_12">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -655,6 +677,8 @@
     <addaction name="separator"/>
     <addaction name="actionAboutQt"/>
     <addaction name="actionAbout_IX83"/>
+    <addaction name="separator"/>
+    <addaction name="actionWinPos"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -664,6 +688,8 @@
     <addaction name="separator"/>
     <addaction name="actionStay_on_Top"/>
     <addaction name="actionLED"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset_winpos"/>
    </widget>
    <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
@@ -708,6 +734,22 @@
    </property>
    <property name="text">
     <string>LED</string>
+   </property>
+  </action>
+  <action name="actionWinPos">
+   <property name="text">
+    <string>Current WinPos</string>
+   </property>
+   <property name="toolTip">
+    <string>Current window positon</string>
+   </property>
+  </action>
+  <action name="actionReset_winpos">
+   <property name="text">
+    <string>Reset WinPos</string>
+   </property>
+   <property name="toolTip">
+    <string>Reset window position</string>
    </property>
   </action>
  </widget>
