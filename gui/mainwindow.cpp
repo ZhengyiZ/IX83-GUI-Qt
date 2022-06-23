@@ -33,8 +33,8 @@ MainWindow::MainWindow(QWidget *parent,
     ui->verticalLayout_4->insertWidget(0, KLAB, 0, Qt::AlignCenter | Qt::AlignVCenter);
 
     // set window position and size
-    setMinimumHeight(392);
-    setMinimumWidth(340);
+//    setMinimumHeight(392);
+//    setMinimumWidth(340);
     // for MINFLUX
     on_actionReset_winpos_triggered();
 
@@ -1074,6 +1074,7 @@ void MainWindow::on_lockBtn_clicked()
         syncBeforeLock = ui->syncBox->isChecked();
         ui->syncBox->setChecked(false);
         enqueueCmd("EN5 0");
+        EN5symbol = false;
     }
     else
     {
@@ -1207,6 +1208,6 @@ void MainWindow::on_actionWinPos_triggered()
 
 void MainWindow::on_actionReset_winpos_triggered()
 {
-    resize(347, 392);
-    move(1121, 335);
+    resize(331, 392);
+    move(1374, 0);
 }

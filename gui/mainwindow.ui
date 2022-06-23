@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>344</width>
+    <width>335</width>
     <height>398</height>
    </rect>
   </property>
@@ -64,7 +64,7 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>130</width>
+          <width>80</width>
           <height>0</height>
          </size>
         </property>
@@ -118,7 +118,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>130</width>
+            <width>80</width>
             <height>0</height>
            </size>
           </property>
@@ -228,14 +228,14 @@
          <bool>true</bool>
         </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>150</width>
+          <width>80</width>
           <height>0</height>
          </size>
         </property>
@@ -665,7 +665,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>344</width>
+     <width>335</width>
      <height>21</height>
     </rect>
    </property>
