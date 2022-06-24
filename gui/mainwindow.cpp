@@ -32,11 +32,12 @@ MainWindow::MainWindow(QWidget *parent,
     KLAB->setCursor(Qt::PointingHandCursor);
     ui->verticalLayout_4->insertWidget(0, KLAB, 0, Qt::AlignCenter | Qt::AlignVCenter);
 
-    // set window position and size
-//    setMinimumHeight(392);
+    // set minimum window size
+    setMinimumHeight(395);
 //    setMinimumWidth(340);
+
     // for MINFLUX
-    on_actionReset_winpos_triggered();
+//    on_actionReset_winpos_triggered();
 
     // pass parameters
     this->pInterface = nullptr;
@@ -524,8 +525,9 @@ void MainWindow::processCallback(QString str)
                 ui->statusbar->showMessage("Initialization complete, ready to work.", 3000);
                 initSymbol = false;
                 ctlSettings(true, false);
+                elapsedTimer.start();
                 // for MINFLUX
-                ui->syncBox->setChecked(true);
+//                ui->syncBox->setChecked(true);
             }
         }
     }
@@ -824,11 +826,19 @@ void MainWindow::processNotify(QString notify)
     {
         notify.remove("NFP ");
         currZ = notify.toDouble() / 100;
-        ui->zSlider->setValue((int)currZ);
+        qint64 et = elapsedTimer.elapsed();
+        qDebug() << "time between focus move cmd sent and receive NFP: " << et << Qt::endl;
+        if (et > 100)
+        {
+            qDebug() << "NFP: true" << Qt::endl;
+            ui->zSlider->setValue((int)currZ);
 
-        ui->zValue->blockSignals(true);
-        ui->zValue->setValue(currZ);
-        ui->zValue->blockSignals(false);
+            ui->zValue->blockSignals(true);
+            ui->zValue->setValue(currZ);
+            ui->zValue->blockSignals(false);
+        }
+        else
+            qDebug() << "NFP: false" << Qt::endl;
     }
 
     // eyepiece ratio
@@ -905,11 +915,19 @@ void MainWindow::processNotify(QString notify)
 
 void MainWindow::focusMove(double target)
 {
-    QString cmd = "FG ";
-    cmd.append(QString::number(target*100, 10, 0));
-    enqueueCmd(cmd);
-    ui->statusbar->showMessage("Moving Focus...", 3000);
-    currZ = target;
+    qint64 et = elapsedTimer.elapsed();
+    qDebug() << "since the last focus move: " << et << Qt::endl;
+    if (et > 100)
+    {
+        QString cmd = "FG ";
+        enqueueCmd(cmd.append(QString::number(target*100, 10, 0)));
+        qDebug() << "focus move cmd: true" + QString::number(target, 10, 2) << Qt::endl;
+        ui->statusbar->showMessage("Moving Focus to " + QString::number(target, 10, 2) + "...", 3000);
+        currZ = target;
+        elapsedTimer.restart();
+    }
+    else
+        qDebug() << "focus move cmd: false" << Qt::endl;
 }
 
 void MainWindow::on_zSlider_sliderReleased()
@@ -1157,7 +1175,7 @@ void MainWindow::on_actionFocus_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::about(this, "About this program",
-                       "Version: 2.6<br>"
+                       "Version: 2.7<br>"
                        "Author: Zhengyi Zhan<br><br>"
                        "Download Update: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/releases'>GitHub Releases</a><br>"
                        "Bug report: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/issues'>GitHub Issues</a><br>");
@@ -1208,6 +1226,6 @@ void MainWindow::on_actionWinPos_triggered()
 
 void MainWindow::on_actionReset_winpos_triggered()
 {
-    resize(331, 392);
+    resize(331, 395);
     move(1374, 0);
 }

@@ -5,6 +5,7 @@
 #include <QCloseEvent>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QElapsedTimer>
 #include "base/cmdthread.h"
 #include "base/klabel.h"
 #include "setwindow.h"
@@ -40,6 +41,7 @@ public:
     double beforeEscape; // unit: 1 um
     double currZ; // unit: 1 um
     bool syncBeforeLock = false;
+    QElapsedTimer elapsedTimer;
 
     Qt::WindowFlags windowFlags = Qt::Window|Qt::WindowTitleHint|
             Qt::WindowMinimizeButtonHint|Qt::WindowCloseButtonHint;
