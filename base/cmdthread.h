@@ -4,8 +4,6 @@
 #include <QThread>
 #include <QQueue>
 #include <QDebug>
-#include <QStandardPaths>
-#include <QFile>
 #include <QEventLoop>
 #include <QTimer>
 #include "DLL.h"
@@ -30,9 +28,6 @@ public:
 
     bool quitSymbol = false;
     bool busy = false;
-    bool syncSymbol = false;
-
-    QString userDir;
 
     QQueue<QString> cmdFIFO;
 
@@ -54,9 +49,6 @@ signals:
     void sendNotify(QString);
     void sendRsp(QString rsp);
     void sendEmergencyQuit();
-    void sendImaging(int mode);
-
-private:
 
 };
 

@@ -19,19 +19,25 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
-       <spacer name="verticalSpacer">
+       <spacer name="verticalSpacer_2">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::MinimumExpanding</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>20</width>
-          <height>40</height>
+          <height>0</height>
          </size>
         </property>
        </spacer>
@@ -42,7 +48,6 @@
          <font>
           <family>微软雅黑</family>
           <pointsize>9</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -76,25 +81,11 @@
        </widget>
       </item>
       <item>
-       <spacer name="verticalSpacer_3">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
        <widget class="QLabel" name="deckLabel">
         <property name="font">
          <font>
           <family>微软雅黑</family>
           <pointsize>9</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -132,22 +123,6 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <spacer name="horizontalSpacer_4">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::MinimumExpanding</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>0</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
            <widget class="QCheckBox" name="shutterBox">
             <property name="font">
              <font>
@@ -157,35 +132,6 @@
             </property>
             <property name="text">
              <string>Close</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::MinimumExpanding</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>0</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="syncBox">
-            <property name="font">
-             <font>
-              <family>微软雅黑</family>
-              <pointsize>8</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Sync</string>
             </property>
            </widget>
           </item>
@@ -210,25 +156,12 @@
        </layout>
       </item>
       <item>
-       <spacer name="verticalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
        <widget class="QGroupBox" name="eyeBox">
         <property name="enabled">
          <bool>true</bool>
         </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -236,14 +169,13 @@
         <property name="minimumSize">
          <size>
           <width>80</width>
-          <height>0</height>
+          <height>53</height>
          </size>
         </property>
         <property name="font">
          <font>
           <family>微软雅黑</family>
           <pointsize>9</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -272,17 +204,22 @@
          </item>
          <item>
           <widget class="QRadioButton" name="eye100">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>45</width>
-             <height>0</height>
+             <height>16</height>
             </size>
            </property>
            <property name="font">
             <font>
              <family>微软雅黑</family>
              <pointsize>7</pointsize>
-             <weight>50</weight>
              <bold>false</bold>
             </font>
            </property>
@@ -302,11 +239,22 @@
          </item>
          <item>
           <widget class="QRadioButton" name="eye50">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>16</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>微软雅黑</family>
              <pointsize>7</pointsize>
-             <weight>50</weight>
              <bold>false</bold>
             </font>
            </property>
@@ -317,11 +265,22 @@
          </item>
          <item>
           <widget class="QRadioButton" name="eye0">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>16</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>微软雅黑</family>
              <pointsize>7</pointsize>
-             <weight>50</weight>
              <bold>false</bold>
             </font>
            </property>
@@ -350,14 +309,17 @@
        </widget>
       </item>
       <item>
-       <spacer name="verticalSpacer_13">
+       <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::MinimumExpanding</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>20</width>
-          <height>40</height>
+          <height>0</height>
          </size>
         </property>
        </spacer>
@@ -367,7 +329,7 @@
         <item>
          <widget class="QCommandLinkButton" name="cmdBtn">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -396,6 +358,9 @@
           <property name="whatsThis">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Input command here.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
+          <property name="text">
+           <string/>
+          </property>
          </widget>
         </item>
         <item>
@@ -407,6 +372,9 @@
           </property>
           <property name="whatsThis">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Response&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string/>
           </property>
           <property name="readOnly">
            <bool>true</bool>
@@ -429,28 +397,6 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QPushButton" name="lockBtn">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>30</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>微软雅黑</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Lock</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="verticalSpacer_12">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -466,7 +412,7 @@
         <item>
          <widget class="QDoubleSpinBox" name="zValue">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -474,14 +420,13 @@
           <property name="minimumSize">
            <size>
             <width>100</width>
-            <height>40</height>
+            <height>50</height>
            </size>
           </property>
           <property name="font">
            <font>
             <family>微软雅黑</family>
             <pointsize>9</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
@@ -495,7 +440,7 @@
            <bool>false</bool>
           </property>
           <property name="suffix">
-           <string> μm</string>
+           <string/>
           </property>
           <property name="maximum">
            <double>10500.000000000000000</double>
@@ -568,12 +513,33 @@
            <font>
             <family>微软雅黑</family>
             <pointsize>10</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
           <property name="text">
            <string>Escape</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="lockBtn">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>微软雅黑</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Lock</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -619,7 +585,6 @@
          <font>
           <family>微软雅黑</family>
           <pointsize>11</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -757,7 +722,6 @@
   <tabstop>objSelection</tabstop>
   <tabstop>deckSelection</tabstop>
   <tabstop>shutterBox</tabstop>
-  <tabstop>syncBox</tabstop>
   <tabstop>eye100</tabstop>
   <tabstop>eye50</tabstop>
   <tabstop>lineCmd</tabstop>

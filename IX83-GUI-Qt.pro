@@ -30,6 +30,9 @@ FORMS += \
     gui/mainwindow.ui \
     gui/setwindow.ui
 
+RESOURCES += \
+    res/styles/breeze.qrc
+
 CONFIG += lrelease
 CONFIG += embed_translations
 

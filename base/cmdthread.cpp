@@ -9,7 +9,6 @@ CMDThread::CMDThread(QObject *parent,
 {
     this->ptr_sendCmd = ptr_sendCmd;
     this->ptr_reCb = ptr_reCb;
-    userDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 }
 
 //	COMMAND: call back entry from SDK port manager
@@ -32,7 +31,7 @@ int CALLBACK CommandCallback(ULONG MsgId, ULONG wParam, ULONG lParam,
 
         // extract string from struct
         QString rsp = QString(QLatin1String((char *)cmdTh->m_Cmd.m_Rsp));
-        rsp.remove("\r\n", Qt::CaseInsensitive);
+        rsp.remove("\r\n");
         qDebug() << " > " << rsp << Qt::endl;
         emit cmdTh->sendRsp(rsp);
     }
@@ -133,6 +132,7 @@ void CMDThread::keepSendingCmd()
             sendCmdToSDK(cmdFIFO.dequeue());
             busy = true;
         }
+
         if (emergencyStop)
         {
             busy = false;
@@ -140,25 +140,7 @@ void CMDThread::keepSendingCmd()
             emit sendEmergencyQuit();
             return;
         }
-        if (syncSymbol)
-        {
-            QFile wf(userDir + "/.MINFLUX/wf.txt");
-            QFile conf(userDir + "/.MINFLUX/conf.txt");
-            if (wf.exists())
-            {
-                qDebug() << "pollThread > wf" << Qt::endl;
-                wf.remove();
-                emit sendImaging(0);
-            }
-            else if (conf.exists())
-            {
-                qDebug() << "pollThread > conf" << Qt::endl;
-                conf.remove();
-                emit sendImaging(1);
-            }
-//            else
-//                qDebug() << "pollThread > no file" << Qt::endl;
-        }
+
         // wait without blocking the thread
         QEventLoop loop;
         QTimer::singleShot(100, &loop, SLOT(quit()));  // time unit: msec

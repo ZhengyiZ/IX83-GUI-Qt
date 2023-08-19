@@ -36,9 +36,6 @@ MainWindow::MainWindow(QWidget *parent,
     setMinimumHeight(395);
 //    setMinimumWidth(340);
 
-    // for MINFLUX
-//    on_actionReset_winpos_triggered();
-
     // pass parameters
     this->pInterface = nullptr;
     this->ptr_closeIf = ptr_closeIf;
@@ -57,8 +54,6 @@ MainWindow::MainWindow(QWidget *parent,
             this, SLOT(receiveRsp(QString)), Qt::QueuedConnection);
     connect(cmdTh, SIGNAL(sendNotify(QString)),
             this, SLOT(receiveNotify(QString)), Qt::QueuedConnection);
-    connect(cmdTh, SIGNAL(sendImaging(int)),
-            this, SLOT(receiveImaging(int)), Qt::QueuedConnection);
 
     // to draw QMessageBox for non-GUI thread
     connect(this, SIGNAL(sendRegister()), cmdTh, SLOT(receiveRegister()));
@@ -88,7 +83,6 @@ void MainWindow::startCmdThread()
 
 void MainWindow::quitProgram(bool login)
 {
-    ui->syncBox->setChecked(false);
     cmdTh->quitSymbol = true;
     cmdTh->cmdFIFO.clear();
 
@@ -170,7 +164,6 @@ void MainWindow::ctlSettings(bool a, bool fromLock)
         a = false;
 
     ui->deckSelection->setEnabled(a);
-    ui->syncBox->setEnabled(a);
     ui->shutterBox->setEnabled(a);
 
     if (!fromLock)
@@ -255,14 +248,6 @@ void MainWindow::initSequence()
     enqueueCmd("DG 0,1"); // hide dialog
     enqueueCmd("OPE 0");
 
-    // 10. set imaging mode to wide field
-    // for MINFLUX
-    if (deckSymbol)
-        if (deckNum == 2)
-        {
-            enqueueCmd("MU2 5");
-            enqueueCmd("ESH2 0");
-        }
 }
 
 // receive slider settings from the settings windows
@@ -339,51 +324,6 @@ void MainWindow::receiveEmergencyQuit()
         insertCmd("U?");
     else
         quitProgram(false);
-}
-
-// receive imaging mode from cmd thread
-// to sync with external programs, such as LabVIEW
-void MainWindow::receiveImaging(int mode)
-{
-    switch(mode)
-    {
-    case 0:
-        if (ui->deckSelection->currentIndex() != 4 && ui->shutterBox->isChecked())
-        {
-            ui->statusbar->showMessage("Switching imaging mode to Wide Field...", 3000);
-            enqueueCmd("EN5 0");
-            EN5symbol = false;
-            enqueueCmd("MU2 5");
-            enqueueCmd("ESH2 0");
-            enqueueCmd("EN5 1");
-        }
-        else if (ui->deckSelection->currentIndex() != 4)
-            ui->deckSelection->setCurrentIndex(4); // move to 5
-        else if (ui->shutterBox->isChecked())
-        {
-            ui->shutterBox->setChecked(false); // open shutter
-            on_shutterBox_clicked();
-        }
-        break;
-    case 1:
-        if (ui->deckSelection->currentIndex() != 3 && !ui->shutterBox->isChecked())
-        {
-            ui->statusbar->showMessage("Switching imaging mode to Confocal...", 3000);
-            enqueueCmd("EN5 0");
-            EN5symbol = false;
-            enqueueCmd("MU2 4");
-            enqueueCmd("ESH2 1");
-            enqueueCmd("EN5 1");
-        }
-        else if (ui->deckSelection->currentIndex() != 3)
-            ui->deckSelection->setCurrentIndex(3); // move to 4
-        else if (!ui->shutterBox->isChecked())
-        {
-            ui->shutterBox->setChecked(true); // close shutter
-            on_shutterBox_clicked();
-        }
-        break;
-    }
 }
 
 // receive response from cmd thread
@@ -526,8 +466,6 @@ void MainWindow::processCallback(QString str)
                 initSymbol = false;
                 ctlSettings(true, false);
                 elapsedTimer.start();
-                // for MINFLUX
-//                ui->syncBox->setChecked(true);
             }
         }
     }
@@ -668,6 +606,8 @@ void MainWindow::processCallback(QString str)
             else
                 ui->statusbar->showMessage("Failed to log in.", 3000);
         }
+        else
+            loginSymbol = !loginSymbol;
     }
 
     // get the connected units
@@ -1089,15 +1029,12 @@ void MainWindow::on_lockBtn_clicked()
 {
     if (ui->lockBtn->isChecked())
     {
-        syncBeforeLock = ui->syncBox->isChecked();
-        ui->syncBox->setChecked(false);
         enqueueCmd("EN5 0");
         EN5symbol = false;
     }
     else
     {
         enqueueCmd("EN5 1");
-        ui->syncBox->setChecked(syncBeforeLock);
     }
 }
 
@@ -1141,14 +1078,6 @@ void MainWindow::on_shutterBox_clicked()
    enqueueCmd("EN5 1");
 }
 
-void MainWindow::on_syncBox_stateChanged(int state)
-{
-    if (state == 2)
-        cmdTh->syncSymbol = true;
-    if (state == 0)
-        cmdTh->syncSymbol = false;
-}
-
 void MainWindow::kLabelClicked()
 {
     QMessageBox::about(this, "The Kuang Lab",
@@ -1175,7 +1104,7 @@ void MainWindow::on_actionFocus_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::about(this, "About this program",
-                       "Version: 2.7<br>"
+                       "Version: 2.8.2<br>"
                        "Author: Zhengyi Zhan<br><br>"
                        "Download Update: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/releases'>GitHub Releases</a><br>"
                        "Bug report: <a href='https://github.com/ZhengyiZ/IX83-GUI-Qt/issues'>GitHub Issues</a><br>");
@@ -1226,6 +1155,6 @@ void MainWindow::on_actionWinPos_triggered()
 
 void MainWindow::on_actionReset_winpos_triggered()
 {
-    resize(331, 395);
-    move(1374, 0);
+    resize(328, 433);
+    move(1377, 45);
 }

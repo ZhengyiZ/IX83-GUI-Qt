@@ -1,11 +1,14 @@
 #include <QApplication>
 #include <QLibrary>
+#include <QStyleFactory>
+#include <QFile>
+#include <QTextStream>
 #include "gui/mainwindow.h"
 #include "gui/ifselection.h"
 
 int main(int argc, char *argv[])
 {
-//    QApplication::setStyle(QStyleFactory::create("Fusion"));
+
     QApplication a(argc, argv);
 
     //// load DLL library ////
@@ -54,6 +57,17 @@ int main(int argc, char *argv[])
         return 0;
     }
     //// end loading function pointer ////
+
+    // set stylesheet
+
+//    QApplication::setStyle(QStyleFactory::create("Fusion"));
+
+    QApplication::setStyle(QStyleFactory::create("Windows10"));
+
+//    QFile file(":/dark/stylesheet.qss");
+//    file.open(QFile::ReadOnly | QFile::Text);
+//    QTextStream stream(&file);
+//    a.setStyleSheet(stream.readAll());
 
     ptr_init();
 

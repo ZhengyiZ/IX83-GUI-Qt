@@ -6,8 +6,8 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QElapsedTimer>
-#include "base/cmdthread.h"
 #include "base/klabel.h"
+#include "base/cmdthread.h"
 #include "setwindow.h"
 
 QT_BEGIN_NAMESPACE
@@ -30,6 +30,7 @@ public:
     bool initSymbol = true;
     bool advCmd = false;
     bool EN5symbol = false;
+    bool loginSymbol = false;
 
     bool deckSymbol = false;
     int deckNum = 1;
@@ -38,9 +39,8 @@ public:
     int currObj = 0;  // range: 0-5
     int currDeckUnit = 0;  // range: 0-7
     int focusNearLimit[6] = {1050000, 1050000, 1050000, 1050000, 1050000}; // unit: 0.01 um
-    double beforeEscape; // unit: 1 um
-    double currZ; // unit: 1 um
-    bool syncBeforeLock = false;
+    double beforeEscape; // unit: um
+    double currZ; // unit: um
     QElapsedTimer elapsedTimer;
 
     Qt::WindowFlags windowFlags = Qt::Window|Qt::WindowTitleHint|
@@ -81,7 +81,6 @@ private slots:
     void receiveRegisterResult(bool);
     void receiveRsp(QString rsp);
     void receiveNotify(QString notify);
-    void receiveImaging(int mode);
 
     // with settings window
     void receiveFSPD(QString);
@@ -105,7 +104,6 @@ private slots:
 
     void on_deckSelection_currentIndexChanged(int index);
     void on_shutterBox_clicked();
-    void on_syncBox_stateChanged(int arg1);
 
     void on_lockBtn_clicked();
     void on_zSlider_sliderReleased();
